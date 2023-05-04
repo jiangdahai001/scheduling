@@ -4,7 +4,7 @@ import com.example.scheduling.util.CommonComponent;
 
 import java.util.*;
 
-public class LibraryGroup implements Cloneable, Comparable<LibraryGroup> {
+public class LibraryGroup implements Comparable<LibraryGroup> {
   // 产品项目名称
   private String productName;
   // 分组编码
@@ -37,21 +37,6 @@ public class LibraryGroup implements Cloneable, Comparable<LibraryGroup> {
     }
     this.hammingDistantLimitCodeMap = map;
   };
-  @Override
-  protected LibraryGroup clone() throws CloneNotSupportedException {
-    LibraryGroup libraryGroup = (LibraryGroup) super.clone();
-//    libraryGroup.libraryList = (ArrayList<Library>) libraryList.clone();
-    List<Library> lList = new ArrayList<>();
-    libraryList.forEach(library -> {
-      try {
-        lList.add((Library) library.clone());
-      } catch (CloneNotSupportedException e) {
-        e.printStackTrace();
-      }
-    });
-    return libraryGroup;
-  }
-
   public Boolean getSingleEnd() {
     return isSingleEnd;
   }
@@ -141,8 +126,9 @@ public class LibraryGroup implements Cloneable, Comparable<LibraryGroup> {
   /**
    * 排列两个文库组的顺序，按是否加急，是否不平衡文库，数据量
    * 加急的排在前面，不平衡文库排在前面，数据量大的排在前面
-   * @param lg2
-   * @return
+   * 如果已经排过顺序，按排过的序号来排列
+   * @param lg2 被比较的那个文库组
+   * @return 返回比较结果
    */
   @Override
   public int compareTo(LibraryGroup lg2) {
@@ -153,8 +139,8 @@ public class LibraryGroup implements Cloneable, Comparable<LibraryGroup> {
     if((lg1.getUrgent() && lg2.getUrgent()) || (!lg1.getUrgent() && !lg2.getUrgent())) {
       if(lg1.getUnbalance() && lg2.getUnbalance()) {
 //        return lg2.getDataSize().compareTo(lg1.getDataSize());
-        if(lg2.getDataSize().equals(lg1.getDataSize())) {
-          return lg2.getCode().compareTo(lg1.getCode());
+        if(Math.abs(lg2.getDataSize()-lg1.getDataSize()) < 0.0001) {
+          return lg1.getCode().compareTo(lg2.getCode());
         } else {
           return lg2.getDataSize().compareTo(lg1.getDataSize());
         }
@@ -164,8 +150,8 @@ public class LibraryGroup implements Cloneable, Comparable<LibraryGroup> {
         return 1;
       } else {
 //        return lg2.getDataSize().compareTo(lg1.getDataSize());
-        if(lg2.getDataSize().equals(lg1.getDataSize())) {
-          return lg2.getCode().compareTo(lg1.getCode());
+        if(Math.abs(lg2.getDataSize()-lg1.getDataSize()) < 0.0001) {
+          return lg1.getCode().compareTo(lg2.getCode());
         } else {
           return lg2.getDataSize().compareTo(lg1.getDataSize());
         }

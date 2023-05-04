@@ -845,17 +845,13 @@ public class Utils {
    */
   public static void indexTypeListPlus(List<CommonComponent.IndexType> indexTypeList, int increment) {
     for(int m=0;m<increment;m++) {
-      int promote = 1;
       for (int i = indexTypeList.size() - 1; i >= 0; i--) {
         CommonComponent.IndexType type = indexTypeList.get(i);
-        if (promote > 0) {
-          if (type.equals(CommonComponent.IndexType.P10)) {
-            indexTypeList.set(i, CommonComponent.IndexType.S6);
+          if (type.equals(CommonComponent.IndexType.S6)) {
+            indexTypeList.set(i, CommonComponent.IndexType.P8);
             continue;
           }
-          indexTypeList.set(i, type.plus(1));
-          promote--;
-        }
+        indexTypeList.set(i, type.plus(1)); break;
       }
     }
   }
@@ -939,16 +935,16 @@ public class Utils {
   /**
    * 读取excel，获取基础数据
    * @param fileName 文件名
-   * @return 返回文库组map
+   * @param libraryGroupMap 待排单的文库组map，key为吉因加编号，value为文库组
    */
-  public static Float readExcel(String fileName, Map<String, LibraryGroup> libraryGroupMap) {
-    // 洗脱文库对象map，记录本次排单的所有洗脱文库数据
-//    Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
-    float[] totalDataSize = {0f};
+  public static void readExcel(String fileName, Map<String, LibraryGroup> libraryGroupMap) {
+    // 排单信息对象，单例，当成全局变量，初始化基础的信息
+    CommonComponent.SchedulingInfo si = CommonComponent.SchedulingInfo.getInstance();
     EasyExcel.read(fileName, ExcelData.class, new PageReadListener<ExcelData>(dataList -> {
       for (ExcelData excelData : dataList) {
         // 计算总数据量
-        totalDataSize[0] += excelData.getDataSize();
+        float itemSize = excelData.getDataSize();
+        si.setDataSize(si.getDataSize() + itemSize);
         // 按行处理读取的数据
         LibraryGroup lg = null;
         // 判断是否在待排单的文库组中，不存在，新增；存在，加入新文库
@@ -972,11 +968,18 @@ public class Utils {
             }
           }
           if(needNew) {
+            si.setLibraryGroupSize(si.getLibraryGroupSize() + 1);
             lg = new LibraryGroup();
             lg.setProductName(excelData.getProductName());
             lg.setCode(excelData.getGeneplusCode());
             if (excelData.getNotes() != null) {
-              lg.setUrgent(excelData.getNotes().contains("加急"));
+              if(excelData.getNotes().contains("加急")) {
+                lg.setUrgent(true);
+                si.setUrgentLibraryGroupSize(si.getUrgentLibraryGroupSize() + 1);
+                si.setUrgentDataSize(si.getUrgentDataSize() + itemSize);
+              } else {
+                lg.setUrgent(false);
+              }
               lg.setUnbalance(excelData.getNotes().contains("不平衡文库"));
               lg.setHammingDistantF(excelData.getNotes().contains("F"));
               lg.setSameLane(excelData.getNotes().contains("同lane上机"));
@@ -1009,14 +1012,6 @@ public class Utils {
         // TODO
       }
     })).sheet().doRead();
-    System.out.println("====================================================");
-    System.out.println("total dataSize: "+totalDataSize[0]);
-    System.out.println("total library group size: " + libraryGroupMap.size());
-    System.out.println("====================================================");
-    CommonComponent.SchedulingInfo si = CommonComponent.SchedulingInfo.getInstance();
-    si.setDataSize(totalDataSize[0]);
-    si.setLibraryGroupSize(libraryGroupMap.size());
-    return totalDataSize[0];
   }
 
   /**
@@ -1100,10 +1095,10 @@ public class Utils {
     List<Lane> laneList = new ArrayList<>();
     for(int i=0;i<size;i++) {
       Lane lane = new Lane();
-      lane.setDataSizeCeiling(1400f);
-      lane.setDataSizeFloor(1300f);
-//      lane.setDataSizeCeiling(1450f);
-//      lane.setDataSizeFloor(1250f);
+//      lane.setDataSizeCeiling(1400f);
+//      lane.setDataSizeFloor(1300f);
+      lane.setDataSizeCeiling(1450f);
+      lane.setDataSizeFloor(1350f);
       laneList.add(lane);
     }
     if(indexTypeList != null) {

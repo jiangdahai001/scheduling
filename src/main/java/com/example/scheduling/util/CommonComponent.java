@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 public class CommonComponent {
   // index类型
   public enum IndexType {
-    S6(1),S8(2),S10(3),P6(4),P8(5),P10(6);
+    S6(6),S8(3),S10(4),P6(5),P8(1),P10(2);
     public static Stream<IndexType> stream() {
       return Stream.of(IndexType.values());
     }
@@ -21,7 +21,7 @@ public class CommonComponent {
       this.value = value;
     }
     public IndexType plus(int num) {
-      int newValue = (this.value + num - 1) % 6 + 1;
+      int newValue = (this.value + num - 1) % IndexType.values().length + 1;
       return fromValue(newValue);
     }
     private static IndexType fromValue(int value) {
@@ -31,6 +31,12 @@ public class CommonComponent {
         }
       }
       return null;
+    }
+    public static Boolean isLast(IndexType indexType) {
+      return indexType.equals(S6);
+    }
+    public static IndexType getFirst() {
+      return P8;
     }
   }
   // index的序列对
@@ -147,11 +153,20 @@ public class CommonComponent {
     // 排单基础信息单例
     private static SchedulingInfo instance = null;
     // 排单数据量
-    private float dataSize = 0f;
+    private float dataSize;
+    // 加急排单数据量
+    private float urgentDataSize;
     // 排单文库组数
-    private int libraryGroupSize = 0;
+    private int libraryGroupSize;
+    // 加急排单文库组数
+    private int urgentLibraryGroupSize;
 
-    private SchedulingInfo(){}
+    private SchedulingInfo(){
+      this.dataSize = 0f;
+      this.urgentDataSize = 0f;
+      this.libraryGroupSize = 0;
+      this.urgentLibraryGroupSize = 0;
+    }
     public static SchedulingInfo getInstance() {
       if(instance == null) {
         instance = new SchedulingInfo();
@@ -163,6 +178,22 @@ public class CommonComponent {
     }
     public void setDataSize(float dataSize) {
       this.dataSize = dataSize;
+    }
+
+    public float getUrgentDataSize() {
+      return urgentDataSize;
+    }
+
+    public void setUrgentDataSize(float urgentDataSize) {
+      this.urgentDataSize = urgentDataSize;
+    }
+
+    public int getUrgentLibraryGroupSize() {
+      return urgentLibraryGroupSize;
+    }
+
+    public void setUrgentLibraryGroupSize(int urgentLibraryGroupSize) {
+      this.urgentLibraryGroupSize = urgentLibraryGroupSize;
     }
 
     public int getLibraryGroupSize() {

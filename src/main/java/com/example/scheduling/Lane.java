@@ -5,7 +5,7 @@ import com.example.scheduling.util.CommonComponent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lane implements Cloneable{
+public class Lane {
   // index 类型
   private CommonComponent.IndexType indexType;
   // lane的数据量
@@ -25,21 +25,8 @@ public class Lane implements Cloneable{
   // lane中的文库组列表
   private List<LibraryGroup> libraryGroupList;
 
-  @Override
-  protected Lane clone() throws CloneNotSupportedException {
-    Lane lane = (Lane) super.clone();
-    List<LibraryGroup> libraryGroups = new ArrayList<>();
-    libraryGroupList.forEach(libraryGroup -> {
-      try {
-        libraryGroups.add((LibraryGroup) libraryGroup.clone());
-      } catch (CloneNotSupportedException e) {
-        e.printStackTrace();
-      }
-    });
-    return lane;
-  }
   public Lane(){
-    this.indexType = CommonComponent.IndexType.S6;
+    this.indexType = CommonComponent.IndexType.getFirst();
     this.dataSize = 0f;
     this.dataSizeCeiling = 1400f;
     this.dataSizeFloor = 1300f;
