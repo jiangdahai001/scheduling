@@ -1,0 +1,106 @@
+/**
+   * 全遍历方式找出合适的排单结果
+   * @param libraryGroupList 待排单的文库组列表
+   * @param laneList lane列表
+   * @param lastNumber 上一个排入lane中的文库组序号
+   * @return 返回是否成功
+   */
+  public static Boolean traversal(List<LibraryGroup> libraryGroupList, List<Lane> laneList, int lastNumber) {
+    traversalCount++;
+    System.out.println("traversal times: " + traversalCount);
+    if(traversalCount >= 3000000) {
+      System.out.println("***********已经达到遍历阈值，无结果！！！************");
+      return false;
+    }
+    // 最后一个加入lane的libraryGroup的序号
+    int number = lastNumber;
+    // 全部排完了，可以从碱基平衡的角度考虑了
+    if(libraryGroupList.get(libraryGroupList.size()-1).getNumber() == lastNumber) {
+      // 考虑碱基平衡 todo
+      // 考虑数据量 todo
+//      for(int i=0;i< laneList.size();i++) {
+//        Lane lane = laneList.get(i);
+//        System.out.println("************************ success!!!! *****************************" + lane.getDataSize());
+//        if(lane.getDataSize() > lane.getDataSizeCeiling() || lane.getDataSize() < lane.getDataSizeFloor()) {
+//          number = resetLane(laneList, lastNumber);
+//          return traversal(libraryGroupList, laneList, number);
+//        }
+//      }
+      return true;
+    }
+    // 最后一个排进去的是第一个，说明已经调整到最后都不可行了
+    if(lastNumber == 1) {
+      return false;
+    }
+    for(int i=lastNumber;i<libraryGroupList.size();i++) {
+      boolean added = false;
+      LibraryGroup libraryGroup = libraryGroupList.get(i);
+      for (Lane lane : laneList) {
+        if (Utils.canAddLibraryGroupToLane(lane, libraryGroup)) {
+          Utils.addLibraryGroupToLane(lane, libraryGroup);
+          number = libraryGroupList.get(i).getNumber();
+          added = true;
+          break;
+        }
+      }
+      // 如果文库组无法加入到lane中，说明之前的排单是有问题的，要调整
+      if(!added) {
+        number = resetLane(laneList, number);
+        break;
+      }
+    }
+    return traversal(libraryGroupList, laneList, number);
+  }
+  /**
+   * 调整lane列表
+   * @param laneList lane列表
+   * @param number 待移位的文库组number
+   * @return 返回需要重新排的第一个文库组的number
+   */
+  public static Integer resetLane(List<Lane> laneList, int number) {
+//    System.out.println("***************************************************** reset，number:" + number);
+//    laneList.forEach(lane-> {
+//      lane.getLibraryGroupList().forEach(libraryGroup1 -> {
+//        System.out.print(libraryGroup1.getNumber()+",");
+//      });
+//      System.out.println("");
+//    });
+//    System.out.println("*****************************************************");
+    // 待移位的libraryGroup
+    LibraryGroup lg = null;
+    // 待移位的libraryGroup所在的lane的序号
+    int laneIndex = -1;
+    // 找到待移位的libraryGroup，及其所在的lane的序号
+    for (int i = 0; i < laneList.size(); i++) {
+      Lane lane = laneList.get(i);
+      List<LibraryGroup> lgListTmp = lane.getLibraryGroupList();
+      for (LibraryGroup lgTmp : lgListTmp) {
+        if (lgTmp.getNumber() == number) {
+          laneIndex = i;
+          lg = lgTmp;
+          break;
+        }
+      }
+      if(laneIndex >= 0) {
+        break;
+      }
+    }
+//    System.out.println("find---" + laneIndex + "====" + lg.getNumber());
+    // 将待移位的libraryGroup移出之前所在的lane
+    Utils.removeLibraryGroupFromLane(laneList.get(laneIndex), lg);
+    // 如果待移位的libraryGroup不在最后一个lane，那就放到下一个lane中试试
+    if(laneIndex < laneList.size() -1) {
+      boolean flag = false;
+      for(int i =laneIndex + 1;i<laneList.size();i++) {
+        flag = Utils.canAddLibraryGroupToLane(laneList.get(i), lg);
+        if(flag) {
+          Utils.addLibraryGroupToLane(laneList.get(i), lg);
+          return lg.getNumber();
+        }
+      }
+    }
+    // 如果所有的lane都放不进去，就只能调整上一个libraryGroup了
+    // 如果本身这个libraryGroup就是在最后一个lane，就只能调整上一个libraryGroup了
+    number = Utils.getLastNumber(laneList);
+    return resetLane(laneList, number);
+  }
