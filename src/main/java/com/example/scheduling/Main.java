@@ -22,9 +22,9 @@ public class Main {
   }
   public static void greedySolution() {
 //    String inFileName = "C:\\Users\\admin\\Desktop\\216.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州1.11.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州3.22.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);
     Utils.preprocess(libraryGroupMap);
@@ -32,10 +32,39 @@ public class Main {
     List<CommonComponent.IndexType> indexTypeList = null;
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
+
+    //
+    //
+//    Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList);
+//    Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
+//    System.out.println("unscheduledMap:");
+//    Float unscheduledMapSize = 0f;
+//    for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
+//      unscheduledMapSize += entry.getValue().getDataSize();
+//      System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
+//    }
+//    System.out.println("unscheduledMapSize: " + unscheduledMapSize);
+//    if(libraryGroupMap.size()>1) System.exit(0);
+
+    //
+    //
+
+
     while (true) {
       indexTypeList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
       solutionCount++;
       System.out.println("solution count: " + solutionCount + "--" + indexTypeList);
+
+      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList);
+      Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
+      System.out.println("unscheduledMap:");
+      Float unscheduledMapSize = 0f;
+      for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
+        unscheduledMapSize += entry.getValue().getDataSize();
+//        System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
+      }
+      System.out.println("unscheduledMapSize: " + unscheduledMapSize);
+
       Utils.putLibraryGroupInLane(libraryGroupMap, laneList, unscheduledMap);
       CommonComponent.ScheduledResult sr = new CommonComponent.ScheduledResult();
       sr.setLaneList(laneList);
@@ -48,12 +77,29 @@ public class Main {
       laneList = Utils.initLaneList(laneListSize, indexTypeList);
       unscheduledMap = new HashMap<>();
     }
-    Utils.printResult(resultList);
+    Utils.printResult(resultList, false);
+    System.out.println("unscheduledMap:");
+    Float unsize = 0f;
+    for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
+      unsize += entry.getValue().getDataSize();
+      System.out.println(entry.getKey() + ": " + entry.getValue().getNumber() +"--数据量: "+entry.getValue().getDataSize() +"--加急: "+entry.getValue().getUrgent());
+    }
+    System.out.println("unscheduledMapSize: " + unsize);
+    resultList.forEach(result -> {
+      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
+      Utils.writeExcel(fileName, result, false);
+      System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    });
   }
   public static void bruteSolutionMulti() {
     System.out.println("hello brute");
-    String inFileName = "C:\\Users\\admin\\Desktop\\216.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\216.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州1.11.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
@@ -62,14 +108,19 @@ public class Main {
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
     resultList = multiBrute(libraryGroupMap, laneList, false);
-    Utils.printResult(resultList);
-//    resultList.forEach(result -> {
-//      if(result.getSuccess()) {
-//        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-multi.xlsx";
-//        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
-//        Utils.writeExcel(fileName, result);
-//      }
-//    });
+    Utils.printResult(resultList, true);
+    resultList.forEach(result -> {
+      if(result.getSuccess()) {
+        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-multi.xlsx";
+        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+        Utils.writeExcel(fileName, result, true);
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
   public static void bruteSolution() {
     System.out.println("hello brute");
@@ -118,6 +169,6 @@ public class Main {
         break;
       }
     }
-    Utils.printResult(resultList);
+    Utils.printResult(resultList, true);
   }
 }

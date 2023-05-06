@@ -36,7 +36,6 @@ public class Utils {
     result += longer - shorter;
     return result;
   }
-
   /**
    * 计算碱基比率
    * map{"A":[15%,12%...],"T":[12%,12%...],"C":[15%,12%...],"G":[12%,12%...],"N":[15%,12%...]}
@@ -191,7 +190,6 @@ public class Utils {
     }
     return new CommonComponent.FRPair(F, R);
   };
-
   /**
    * 根据提供的F/R及规则，生成用于计算的index序列
    * @param rule 拆分规则
@@ -251,36 +249,6 @@ public class Utils {
     }
     return sb.reverse().toString();
   }
-
-  /**
-   * 排列两个文库组的顺序，按是否加急，是否不平衡文库，数据量
-   * 加急的排在前面，不平衡文库排在前面，数据量大的排在前面
-   * @param lg1
-   * @param lg2
-   * @return
-   */
-//  public static int compareLibraryGroup(LibraryGroup lg1, LibraryGroup lg2) {
-//    if(lg1.getNumber()!=null &&lg2.getNumber()!=null) {
-//      return lg1.getNumber() - lg2.getNumber();
-//    }
-//    if((lg1.getUrgent() && lg2.getUrgent()) || (!lg1.getUrgent() && !lg2.getUrgent())) {
-//      if(lg1.getUnbalance() && lg2.getUnbalance()) {
-//        return lg2.getDataSize().compareTo(lg1.getDataSize());
-//      } else if(lg1.getUnbalance()) {
-//        return -1;
-//      } else if(lg2.getUnbalance()) {
-//        return 1;
-//      } else {
-//        return lg2.getDataSize().compareTo(lg1.getDataSize());
-//      }
-//    } else if(lg1.getUrgent()) {
-//      return -1;
-//    } else if(lg2.getUrgent()) {
-//      return 1;
-//    } else {
-//      return 0;
-//    }
-//  }
 
   /**
    * 输出碱基比率时的表头
@@ -401,16 +369,15 @@ public class Utils {
       return false;
     }
     CommonComponent.IndexType indexType = lane.getIndexType();
-    switch(indexType) {
-      case P6,P8,P10 -> {
-        float laneSingleEndDataSizeTmp = lgSingleEndDataSize + lane.getSingleEndDataSize();
-        float laneDataSizeTmp = lgSingleEndDataSize + lane.getDataSize();
-        if(laneDataSizeTmp < lane.getDataSizeFloor()) {
-          laneDataSizeTmp = lane.getDataSizeFloor();
-        }
-        if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
-          return false;
-        }
+    if(CommonComponent.IndexType.isPairEnd(indexType)) {
+      float laneSingleEndDataSizeTmp = lgSingleEndDataSize + lane.getSingleEndDataSize();
+      float laneDataSizeTmp = lgSingleEndDataSize + lane.getDataSize();
+      if(laneDataSizeTmp < lane.getDataSizeFloor()) {
+        laneDataSizeTmp = lane.getDataSizeFloor();
+      }
+      if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
+        System.out.println("**&&*&*&*&&(*(&*&*&*");
+        return false;
       }
     }
     for(LibraryGroup lg1: list) {
@@ -431,14 +398,19 @@ public class Utils {
     lane.getLibraryGroupList().addAll(list);
     Float size = 0f;
     Float unbalanceSize = 0f;
+    Float singleEndSize = 0f;
     for (LibraryGroup libraryGroup : list) {
       size += libraryGroup.getDataSize();
       if(libraryGroup.getUnbalance()) {
         unbalanceSize += libraryGroup.getDataSize();
       }
+      if(libraryGroup.getSingleEnd()) {
+        singleEndSize += libraryGroup.getDataSize();
+      }
     }
     lane.setDataSize(lane.getDataSize() + size);
     lane.setUnbalanceDataSize(lane.getUnbalanceDataSize() + unbalanceSize);
+    lane.setSingleEndDataSize(lane.getSingleEndDataSize() + singleEndSize);
   }
   /**
    * 判断能否将一个文库组加入到lane中
@@ -457,14 +429,9 @@ public class Utils {
    * @param libraryGroup
    */
   public static void addLibraryGroupToLane(Lane lane, LibraryGroup libraryGroup) {
-    lane.getLibraryGroupList().add(libraryGroup);
-    Float size = libraryGroup.getDataSize();
-    Float unbalanceSize = 0f;
-    if(libraryGroup.getUnbalance()) {
-      unbalanceSize = libraryGroup.getDataSize();
-    }
-    lane.setDataSize(lane.getDataSize() + size);
-    lane.setUnbalanceDataSize(lane.getUnbalanceDataSize() + unbalanceSize);
+    List<LibraryGroup> list = new ArrayList<>();
+    list.add(libraryGroup);
+    addLibraryGroupListToLane(lane, list);
   }
   /**
    * 将一个文库组移出lane
@@ -475,12 +442,13 @@ public class Utils {
     List<LibraryGroup> list = lane.getLibraryGroupList();
     list.remove(libraryGroup);
     Float size = libraryGroup.getDataSize();
-    Float unbalanceSize = 0f;
-    if(libraryGroup.getUnbalance()) {
-      unbalanceSize = libraryGroup.getDataSize();
-    }
     lane.setDataSize(lane.getDataSize() - size);
-    lane.setUnbalanceDataSize(lane.getUnbalanceDataSize() - unbalanceSize);
+    if(libraryGroup.getUnbalance()) {
+      lane.setUnbalanceDataSize(lane.getUnbalanceDataSize() - size);
+    }
+    if(libraryGroup.getSingleEnd()) {
+      lane.setSingleEndDataSize(lane.getSingleEndDataSize() - size);
+    }
   }
 
   /**
@@ -548,28 +516,36 @@ public class Utils {
 
   /**
    * 为文库组设置汉明距离限制的文库组编号map
-   * @param sourceMap
+   * @param sourceMap 文库组map
    */
   public static void setHammingDistantLimitCodeMap(Map<String, LibraryGroup> sourceMap) {
+    // 通过文库组map获取文库组list
     List<LibraryGroup> lgList = sourceMap.values().stream().sorted().collect(Collectors.toList());
+    // 遍历所有indextype，为每种indextype获取限制的code列表
     for(CommonComponent.IndexType type:CommonComponent.IndexType.values()) {
       for(int i=0;i<lgList.size();i++) {
         LibraryGroup lg1 = lgList.get(i);
-        List<String> codeList = lg1.getHammingDistantLimitCodeMap().get(type);
+//        if(unscheduledMap.containsKey(lg1.getCode())) continue;
+//        List<String> codeList = lg1.getHammingDistantLimitCodeMap().get(type);
+        // 每次都要初始化，因为需要根据实际的lanelist，计算动态汉明距离限制列表，这个方法会多次调用
+        List<String> codeList = new ArrayList<>();
+        lg1.getHammingDistantLimitCodeMap().put(type, codeList);
+        // 获取文库组1在当前indextype下的index序列
         List<String> list1 = lg1.getLibraryList().stream().map(library -> {
           return library.getIndexSeqMap().get(type);
         }).collect(Collectors.toList());
         for(int j=0;j<lgList.size();j++) {
           if(j==i) continue;
           LibraryGroup lg2 = lgList.get(j);
+//          if(unscheduledMap.containsKey(lg2.getCode())) continue;
+          // 获取文库组2在当前indextype下的index序列
           List<String> list2 = lg2.getLibraryList().stream().map(library -> {
             return library.getIndexSeqMap().get(type);
           }).collect(Collectors.toList());
+          // 默认情况下汉明距离限制为2
           int limit = 2;
-          if((type.equals(CommonComponent.IndexType.S6) ||
-            type.equals(CommonComponent.IndexType.S8) ||
-            type.equals(CommonComponent.IndexType.S10)) &&
-            lg1.getHammingDistantF()) {
+          // 如果在双端测序的lane情况下，文库组1有标记F，则汉明距离限制为1
+          if(CommonComponent.IndexType.isPairEnd(type) && (lg1.getHammingDistantF() || lg2.getHammingDistantF())) {
             limit = 1;
           }
           if(getSmallestHammingDistant(list1, list2) < limit) {
@@ -578,80 +554,84 @@ public class Utils {
         }
       }
     }
+//    System.out.println("*********************** sethammingdistantlimitcode map: ");
+//    List<LibraryGroup> libraryGroupList = sourceMap.values().stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+//    libraryGroupList.forEach(lg -> {
+//      System.out.println(lg.getNumber() + "\t" + Utils.getNumberList(sourceMap, lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8)));
+//    });
   }
   /**
    * 为文库组设置汉明距离不符合的文库组吉因加编号列表
    * @param sourceMap 原始的文库组map
    */
-//  public static void setHDUnqualifiedGeneplusCodeList(Map<String, LibraryGroup> sourceMap) {
-//    // 将map转换为list
-//    List<LibraryGroup> libraryGroupList = new ArrayList<>(sourceMap.values());
-//    // 将list内容按数据量排序
-//    libraryGroupList = libraryGroupList.stream()
-//      .sorted()
-//      .collect(Collectors.toList());
-//    for(int i=0;i<libraryGroupList.size();i++) {
-//      LibraryGroup lg1 = libraryGroupList.get(i);
-//      List<String> codeList = new ArrayList<>();
-//      lg1.setHammingDistantUnqualifiedGeneplusCodeList(codeList);
-//      List<String> list1 = lg1.getLibraryList().stream().map(Library::getIndexSeq).collect(Collectors.toList());
-//      for(int j=0;j<libraryGroupList.size();j++) {
-//        if(j == i) continue;
-//        LibraryGroup lg2 = libraryGroupList.get(j);
-//        List<String> list2 = lg2.getLibraryList().stream().map(Library::getIndexSeq).collect(Collectors.toList());
-//        if(getSmallestHammingDistant(list1, list2) < 2) {
-//          codeList.add(lg2.getCode());
-//        }
-//      }
-//    }
-//  }
+  public static void setDynamicHammingDistantLimitCodeMap(Map<String, LibraryGroup> sourceMap, List<Lane> laneList) {
+    // 先初始化汉明距离限制在各种indextype下的列表
+    setHammingDistantLimitCodeMap(sourceMap);
+    // 将map转换为list，加上排序
+    List<LibraryGroup> libraryGroupList = sourceMap.values().stream().sorted().collect(Collectors.toList());
+    // 通过lane列表获取indextype的list
+    List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
+    for (LibraryGroup lg : libraryGroupList) {
+//      if(unscheduledMap.containsKey(lg.getCode())) continue;
+      // 遍历当前indextype列表的indextype，将对应的汉明距离限制code列表取交集，设为当前文库组对应当前lane列表下的code限制列表
+      List<List<String>> list = new ArrayList<>();
+      for (CommonComponent.IndexType indexType : itList) {
+        List<String> listTmp = lg.getHammingDistantLimitCodeMap().get(indexType);
+        list.add(listTmp);
+      }
+      List<String> codeList = getIntersection(list);
+      lg.getDynamicHammingDistantLimitCodeMap().put(itList, codeList);
+    }
+  }
 
   /**
-   * 根据lane的数量和文库组间的汉明距离不符合的情况，将无法排上的文库组中按优先级（加急，不平衡，数据量；倒序）放到未排单map中
+   * 根据lane的列表和文库组间的汉明距离不符合的情况，将无法排上的文库组中按优先级（加急，不平衡，数据量；倒序）放到未排单map中
    * 核心：汉明距离冲突的相关文库组的编号列表的交集，应小于lane的数量，否则就需要丢到优先级最低的一个，然后递归，直至都可以排入
-   * @param laneCount lane的梳理
+   * @param laneList lane的列表
    * @param sourceMap 文库组map
    * @param unscheduledMap 未排单文库组map
    */
-//  public static void moveToUnscheduledMapAccordingHammingDistance(int laneCount, Map<String, LibraryGroup> sourceMap, Map<String, LibraryGroup> unscheduledMap) {
-//    // 将map转换为list
-//    List<LibraryGroup> libraryGroupList = new ArrayList<>(sourceMap.values());
-//    // 将list内容排序，按优先级倒序，这样最先处理的就是最可能丢到未排单map的
-//    libraryGroupList = libraryGroupList.stream()
-//      .sorted(Comparator.reverseOrder())
-//      .collect(Collectors.toList());
-//    // 判断是否需要递归
-//    boolean flag = false;
-//    for (LibraryGroup lg : libraryGroupList) {
-//      List<String> codeList = new ArrayList<>(List.copyOf(lg.getHammingDistantUnqualifiedGeneplusCodeList()));
-//      if (codeList.size() < laneCount) continue;
-//      List<List<String>> list = new ArrayList<>();
-//      codeList.add(lg.getCode());
-//      list.add(codeList);
-//      for (String s : codeList) {
-//        LibraryGroup lgTmp = sourceMap.get(s);
-//        List<String> codeListTmp = new ArrayList<>(List.copyOf(lgTmp.getHammingDistantUnqualifiedGeneplusCodeList()));
-//        codeListTmp.add(lgTmp.getCode());
-//        list.add(codeListTmp);
-//      }
-//      // 求汉明距离不符的数据的交集，如果交集中元素个数大于lane的数量，则需要从交集中选中一个优先级最低的放到未排单列表
-//      List<String> targetList = getIntersection(list);
-//      if(targetList.size() <= laneCount) continue;
-//      List<LibraryGroup> lgList = sourceMap.values().stream().filter(libraryGroup -> {
-//        return targetList.contains(libraryGroup.getCode());
-//      }).collect(Collectors.toList());
-//      lgList = lgList.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
-//      String discardCode = lgList.get(0).getCode();
-//      unscheduledMap.put(discardCode, lgList.get(0));
-//      sourceMap.remove(discardCode);
-//      flag = true;
-//      setHDUnqualifiedGeneplusCodeList(sourceMap);
-//      break;
-//    }
-//    if(flag) {
-//      moveToUnscheduledMapAccordingHammingDistance(laneCount, sourceMap, unscheduledMap);
-//    }
-//  }
+  public static void moveToUnscheduledMapAccordingHammingDistance(List<Lane> laneList, Map<String, LibraryGroup> sourceMap, Map<String, LibraryGroup> unscheduledMap) {
+    // 将map转换为list
+    // 将list内容排序，按优先级倒序，这样最先处理的就是最可能丢到未排单map的
+    List<LibraryGroup> libraryGroupList = sourceMap.values().stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+    // 当前lane列表对应的indextype的列表
+    List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
+    // 判断是否需要递归
+    boolean flag = false;
+    for (LibraryGroup lg : libraryGroupList) {
+      // 当前文库组在当前lane列表的情况下，汉明距离限制的code列表
+      List<String> codeList = new ArrayList<>(List.copyOf(lg.getDynamicHammingDistantLimitCodeMap().get(itList)));
+      // 当前文库组限制code列表的数据个数小于lane列表的个数，说明肯定可以排入
+      if (codeList.size() < laneList.size()) continue;
+      List<List<String>> list = new ArrayList<>();
+      for (String s : codeList) {
+        LibraryGroup lgTmp = sourceMap.get(s);
+        List<String> codeListTmp = new ArrayList<>(List.copyOf(lgTmp.getDynamicHammingDistantLimitCodeMap().get(itList)));
+        codeListTmp.add(lgTmp.getCode());
+        list.add(codeListTmp);
+      }
+      codeList.add(lg.getCode());
+      list.add(codeList);
+      // 求汉明距离不符的数据的交集，如果交集中元素个数大于lane的数量，则需要从交集中选中一个优先级最低的放到未排单列表
+      List<String> targetList = getIntersection(list);
+      // 交集的数据个数小于lane列表的个数，说明肯定可以排入
+      if(targetList.size() <= laneList.size()) continue;
+      List<LibraryGroup> lgList = sourceMap.values().stream().filter(libraryGroup -> {
+        return targetList.contains(libraryGroup.getCode());
+      }).collect(Collectors.toList());
+      lgList = lgList.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+      String discardCode = lgList.get(0).getCode();
+      unscheduledMap.put(discardCode, lgList.get(0));
+      sourceMap.remove(discardCode);
+      flag = true;
+      setDynamicHammingDistantLimitCodeMap(sourceMap, laneList);
+      break;
+    }
+    if(flag) {
+      moveToUnscheduledMapAccordingHammingDistance(laneList, sourceMap, unscheduledMap);
+    }
+  }
   /**
    * 将文库组列表放到未排单文库map中
    * @param libraryGroupList 未排单文库组列表
@@ -694,12 +674,12 @@ public class Utils {
   }
   /**
    * 从有值的list中取交集
-   * @param lists
-   * @return
+   * @param lists 待求交集的列表的列表
+   * @return 交集
    */
   public static List<String> getIntersection(List<List<String>> lists) {
     if(lists == null || lists.size() == 0){
-      return null;
+      return new ArrayList<>();
     }
 //    ArrayList<List<String>> arrayList = new ArrayList<>(lists);
     ArrayList<List<String>> arrayList = new ArrayList<>();
@@ -718,9 +698,9 @@ public class Utils {
         i-- ;
       }
     }
-    // 都是空集合，返回null
+    // 都是空集合，返回空集合
     if(arrayList.size() == 0){
-      return null;
+      return new ArrayList<>();
     }
     List<String> intersection = arrayList.get(0) ;
     // 只有一个非空集合，结果就是它本身
@@ -782,62 +762,97 @@ public class Utils {
    * @param unscheduledMap 未排单文库组map
    */
   public static void putLibraryGroupInLane(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, Map<String, LibraryGroup> unscheduledMap) {
-    // 将map转换为list
-    List<LibraryGroup> lgList = new ArrayList<>(libraryGroupMap.values());
-    // 将list内容按数据量排序
-    lgList = lgList.stream().sorted().collect(Collectors.toList());
+    // 将map转换为list，按加急/不平衡/数据量排序
+    List<LibraryGroup> lgList = libraryGroupMap.values().stream().sorted().collect(Collectors.toList());
     for(LibraryGroup lg:lgList) {
+      // 文库组是否已经加入到lane中的标识
       boolean inFlag = false;
+      // lane的列表按数据量排序，从小往大
       laneList = laneList.stream().sorted(Comparator.comparing(Lane::getDataSize)).collect(Collectors.toList());
       for (Lane lane : laneList) {
-        // 判断一个洗脱文库列表是否可以放到某个lane中
+        // 判断一个文库组是否可以放到某个lane中
         if (canAddLibraryGroupToLane(lane, lg)) {
-          Utils.addLibraryGroupToLane(lane, lg);
+          addLibraryGroupToLane(lane, lg);
           inFlag = true;
           break;
         }
       }
+      // 文库组已经排入lane中，直接开始排下一个
       if(inFlag) continue;
       // 都加不进去，尝试将同这个文库组冲突的已经在lane中的文库组移动到别的lane，然后再试一下
       for (int i = 0; i < laneList.size(); i++) {
         Lane previousLane = laneList.get(i);
+        // 当前文库组对应的限制code列表
         List<String> limitCodeList = lg.getHammingDistantLimitCodeMap().get(previousLane.getIndexType());
-        List<String> previousLaneCodeList = previousLane.getLibraryGroupList().stream().map(lgTmp -> {
-          return lgTmp.getCode();
-        }).collect(Collectors.toList());
+        // 当前lane对应的code列表
+        List<String> previousLaneCodeList = previousLane.getLibraryGroupList().stream().map(LibraryGroup::getCode).collect(Collectors.toList());
         List<List<String>> listList = new ArrayList<>();
         listList.add(limitCodeList);
         listList.add(previousLaneCodeList);
-        // 待移位的文库组code列表
+        // 交集就是待移位的文库组code列表
         List<String> targetCodeList = getIntersection(listList);
         // 待移位的文库组列表
-        List<LibraryGroup> targetLibraryGroupList = targetCodeList.stream().map(code -> {
-          return libraryGroupMap.get(code);
-        }).collect(Collectors.toList());
+        List<LibraryGroup> targetLibraryGroupList = targetCodeList.stream().map(libraryGroupMap::get).collect(Collectors.toList());
         for(int j = 0;j < laneList.size(); j++) {
           if(j == i) continue;
           Lane targetLane = laneList.get(j);
-          if(canAddLibraryGroupListToLane(targetLane, targetLibraryGroupList) &&
-            canAddLibraryGroupToLane(previousLane, lg)) {
+          if(canAddLibraryGroupListToLane(targetLane, targetLibraryGroupList)) {
             // 如果可以加入到其他的lane，就加入到其他的lane，并从之前的lane中删掉，然后把当前文库组放到之前的lane中
             addLibraryGroupListToLane(targetLane, targetLibraryGroupList);
             targetLibraryGroupList.forEach(targetLibraryGroup -> {
-              previousLane.getLibraryGroupList().remove(targetLibraryGroup);
+              removeLibraryGroupFromLane(previousLane, targetLibraryGroup);
             });
-            addLibraryGroupToLane(previousLane, lg);
-            inFlag = true;
-            break;
+            if(canAddLibraryGroupToLane(previousLane, lg)) {
+              addLibraryGroupToLane(previousLane, lg);
+              inFlag = true;
+              break;
+            } else {
+              // 可能因为数据量等原因，还是无法加入，就重新加入到之前的lane中，然后新lane加入的也要移出
+              targetLibraryGroupList.forEach(targetLibraryGroup -> {
+                addLibraryGroupToLane(previousLane, targetLibraryGroup);
+                removeLibraryGroupFromLane(targetLane, targetLibraryGroup);
+              });
+            }
           }
         }
         if(inFlag) break;
       }
       // 还有未排单的洗脱文库，则放到未排单文库中
       if(!inFlag) {
+//        testPrint(libraryGroupMap, laneList, lg);
         addLibraryGroupToUnscheduledMap(lg, unscheduledMap);
       }
     };
   }
 
+  public static void testPrint(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, LibraryGroup lg) {
+    for (Lane lane : laneList) {
+      StringBuilder sb = new StringBuilder();
+      Float size = 0f;
+      for (LibraryGroup lgTmp : lane.getLibraryGroupList()) {
+        size += lgTmp.getDataSize();
+        sb.append(lgTmp.getNumber()).append(",");
+      }
+      System.out.println("lane data size: " + size + "--library group(" + lane.getLibraryGroupList().size() + "): " + sb.toString());
+    }
+    System.out.println("放到unscheduled:" + lg.getNumber() + "--" + lg.getCode() + "--" + lg.getDataSize());
+    List<CommonComponent.IndexType> its = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
+    System.out.print(its);
+    System.out.print(": ");
+    System.out.print(lg.getDynamicHammingDistantLimitCodeMap().get(its));
+    System.out.print(": ");
+    List<Integer> numberList = lg.getDynamicHammingDistantLimitCodeMap().get(its).stream().map(code -> {
+      return libraryGroupMap.get(code).getNumber();
+    }).collect(Collectors.toList());
+    System.out.println(numberList);
+    System.out.println("***********************");
+    System.out.print(lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8));
+    System.out.print(": ");
+    List<Integer> numberList2 = lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8).stream().map(code -> {
+      return libraryGroupMap.get(code).getNumber();
+    }).collect(Collectors.toList());
+    System.out.println(numberList2);
+  }
   /**
    * 从旧的indexTypeList获取新的indexTypeList
    * @param indexTypeList 旧的indexTypeList
@@ -847,8 +862,8 @@ public class Utils {
     for(int m=0;m<increment;m++) {
       for (int i = indexTypeList.size() - 1; i >= 0; i--) {
         CommonComponent.IndexType type = indexTypeList.get(i);
-          if (type.equals(CommonComponent.IndexType.S6)) {
-            indexTypeList.set(i, CommonComponent.IndexType.P8);
+          if (CommonComponent.IndexType.isLast(type)) {
+            indexTypeList.set(i, CommonComponent.IndexType.getFirst());
             continue;
           }
         indexTypeList.set(i, type.plus(1)); break;
@@ -1012,16 +1027,20 @@ public class Utils {
         // TODO
       }
     })).sheet().doRead();
+    System.out.println("data size: " + si.getDataSize());
+    System.out.println("library group size: " + si.getLibraryGroupSize());
   }
 
   /**
    * 将结果打印出来
    * @param fileName 文件名
    */
-  public static void writeExcel(String fileName, CommonComponent.ScheduledResult scheduledResult) {
-    if(!scheduledResult.getSuccess()) {
-      System.out.println("排单不成功，未打印: " + fileName);
-      return;
+  public static void writeExcel(String fileName, CommonComponent.ScheduledResult scheduledResult, Boolean justSuccess) {
+    if(justSuccess) {
+      if(!scheduledResult.getSuccess()) {
+        System.out.println("排单不成功，未打印: " + fileName);
+        return;
+      }
     }
     List<Lane> laneList = scheduledResult.getLaneList();
     Map<String, LibraryGroup> unscheduledMap = scheduledResult.getUnscheduledLibraryGroupMap();
@@ -1055,9 +1074,11 @@ public class Utils {
    * 打印排单结果
    * @param resultList 排单结果
    */
-  public static void printResult(List<CommonComponent.ScheduledResult> resultList) {
+  public static void printResult(List<CommonComponent.ScheduledResult> resultList, boolean justSuccess) {
     for(CommonComponent.ScheduledResult result: resultList) {
-//      if(!result.getSuccess()) continue;
+      if(justSuccess) {
+        if(!result.getSuccess()) continue;
+      }
       StringBuilder sb = new StringBuilder();
       if(result.getSuccess()) {
         sb.append("success:===");
@@ -1065,11 +1086,19 @@ public class Utils {
         sb.append("failed:");
       }
       result.getLaneList().stream().forEach(lane -> {
-        sb.append("\t" + "lane: " + lane.getIndexType() + ": " + lane.getDataSize());
+        sb.append("\t" + "lane: ").append(lane.getIndexType()).append(": ").append(lane.getDataSize());
+        StringBuilder sbLane = new StringBuilder();
+        Float size = 0f;
+        for(LibraryGroup lg:lane.getLibraryGroupList()) {
+          size += lg.getDataSize();
+          sbLane.append(lg.getNumber()).append(",");
+        }
+        System.out.println("lane data size: "+size +"--library group("+lane.getLibraryGroupList().size() + "): "+sbLane.toString());
       });
-      sb.append("\tunscheduled: " + result.getUnscheduledDataSize());
-      sb.append("\t" +result.getNotes());
+      sb.append("\tunscheduled: ").append(result.getUnscheduledDataSize());
+      sb.append("\t").append(result.getNotes());
       System.out.println(sb.toString());
+
     }
   }
 
@@ -1125,13 +1154,17 @@ public class Utils {
       }
     });
     Utils.setLibraryGroupNumber(libraryGroupMap);
-    Utils.setHammingDistantLimitCodeMap(libraryGroupMap);
-//    List<LibraryGroup> list = new ArrayList<>(libraryGroupMap.values());
-//    list = list.stream().sorted().collect(Collectors.toList());
-//    list.forEach(lg -> {
-//      System.out.println(lg.getNumber() + "-----" + lg.getCode());
-//      lg.getHammingDistantLimitCodeMap().forEach((key, value) -> System.out.println(key + "----------" + value));
+//    Utils.setHammingDistantLimitCodeMap(libraryGroupMap);
+//    libraryGroupMap.values().stream().sorted().forEach(lg -> {
+//      List<Integer> numberList = lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8).stream().map(code -> {
+//        return libraryGroupMap.get(code).getNumber();
+//      }).collect(Collectors.toList());
+//      System.out.println(lg.getNumber() + "\t" + lg.getCode() +"\t" +lg.getDataSize()+"\t"+lg.getUrgent()+
+//        "\t"+lg.getUnbalance()+"\t"+lg.getHammingDistantF()+
+//        "\t"+numberList+
+//        "\t"+lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8));
 //    });
+//    if(libraryGroupMap.size()>1) System.exit(0);
   }
 
   /**
@@ -1273,5 +1306,20 @@ public class Utils {
     // 如果本身这个libraryGroup就是在最后一个lane，就只能调整上一个libraryGroup了
     number = Utils.getLastNumber(laneList);
     return resetLane(laneList, number);
+  }
+
+  /**
+   * 通过编码list获取编号list
+   * @param map 文库组map
+   * @param codeList 编码list
+   * @return 编号list
+   */
+  public static List<Integer> getNumberList(Map<String, LibraryGroup> map, List<String> codeList) {
+    List<Integer> list = new ArrayList<>();
+    for(String code: codeList) {
+      Integer number = map.get(code).getNumber();
+      list.add(number);
+    }
+    return list;
   }
 }

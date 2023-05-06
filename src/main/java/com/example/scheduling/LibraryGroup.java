@@ -26,8 +26,10 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
   private List<Library> libraryList;
   // 文库组编号
   private Integer number;
-  // 汉明距离受限制的map,key是indextype，value是文库组id列表
+  // 汉明距离受限制的map,key是indextype，value是文库组code列表
   private Map<CommonComponent.IndexType, List<String>> hammingDistantLimitCodeMap;
+  // 汉明距离受限制的map，key是indextype的列表，value是文库组code列表，这个map的key是根据实际排单中的lane列表具体来填值的
+  private Map<List<CommonComponent.IndexType>, List<String>> dynamicHammingDistantLimitCodeMap;
 
   public LibraryGroup(){
     this.libraryList = new ArrayList<>();
@@ -36,6 +38,8 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
       map.put(type, new ArrayList<>());
     }
     this.hammingDistantLimitCodeMap = map;
+    Map<List<CommonComponent.IndexType>, List<String>> dynamicMap = new HashMap<>();
+    this.dynamicHammingDistantLimitCodeMap = dynamicMap;
   };
   public Boolean getSingleEnd() {
     return isSingleEnd;
@@ -67,6 +71,14 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
 
   public Map<CommonComponent.IndexType, List<String>> getHammingDistantLimitCodeMap() {
     return hammingDistantLimitCodeMap;
+  }
+
+  public Map<List<CommonComponent.IndexType>, List<String>> getDynamicHammingDistantLimitCodeMap() {
+    return dynamicHammingDistantLimitCodeMap;
+  }
+
+  public void setDynamicHammingDistantLimitCodeMap(Map<List<CommonComponent.IndexType>, List<String>> dynamicHammingDistantLimitCodeMap) {
+    this.dynamicHammingDistantLimitCodeMap = dynamicHammingDistantLimitCodeMap;
   }
 
   public void setHammingDistantLimitCodeMap(Map<CommonComponent.IndexType, List<String>> hammingDistantLimitCodeMap) {

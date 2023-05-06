@@ -2,6 +2,7 @@ package com.example.scheduling.util;
 
 import com.example.scheduling.Lane;
 import com.example.scheduling.LibraryGroup;
+import org.apache.poi.ss.formula.functions.Index;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,10 +34,16 @@ public class CommonComponent {
       return null;
     }
     public static Boolean isLast(IndexType indexType) {
-      return indexType.equals(S6);
+      return indexType.equals(P10);
     }
     public static IndexType getFirst() {
       return P8;
+    }
+    public static Boolean isPairEnd(IndexType indexType) {
+      return indexType.equals(P6)|| indexType.equals(P8) ||indexType.equals(P10);
+    }
+    public static Boolean isSingleEnd(IndexType indexType) {
+      return indexType.equals(S6)|| indexType.equals(S8) ||indexType.equals(S10);
     }
   }
   // index的序列对

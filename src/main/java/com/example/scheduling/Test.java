@@ -1,9 +1,26 @@
 package com.example.scheduling;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 public class Test {
   public static void main(String[] args) {
-    String a = method(1, 10, "xxxx");
-    System.out.println("a:" + a);
+    mapTest();
+  }
+  public static void mapTest() {
+    Map<List<String>, List<Integer>> map = new HashMap<>();
+    List<String> k1 = new ArrayList<>();
+    k1.add("ss");
+    k1.add("bb");
+    List<Integer> v1 = new ArrayList<>();
+    v1.add(1);
+    map.put(k1, v1);
+    System.out.println(map);
+    List<String> kk = new ArrayList<>();
+    kk.add("ss");
+    kk.add("bb");
+    System.out.println(map.get(kk));
   }
   public static String method(int threadNum, int timeOut, String abc) {
     String r = null;
