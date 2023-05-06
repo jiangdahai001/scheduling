@@ -518,14 +518,14 @@ public class Utils {
    * 为文库组设置汉明距离限制的文库组编号map
    * @param sourceMap 文库组map
    */
-  public static void setHammingDistantLimitCodeMap(Map<String, LibraryGroup> sourceMap) {
+  public static void setHammingDistantLimitCodeMap(Map<String, LibraryGroup> sourceMap, Map<String, LibraryGroup> unscheduledMap) {
     // 通过文库组map获取文库组list
     List<LibraryGroup> lgList = sourceMap.values().stream().sorted().collect(Collectors.toList());
     // 遍历所有indextype，为每种indextype获取限制的code列表
     for(CommonComponent.IndexType type:CommonComponent.IndexType.values()) {
       for(int i=0;i<lgList.size();i++) {
         LibraryGroup lg1 = lgList.get(i);
-//        if(unscheduledMap.containsKey(lg1.getCode())) continue;
+        if(unscheduledMap.containsKey(lg1.getCode())) continue;
 //        List<String> codeList = lg1.getHammingDistantLimitCodeMap().get(type);
         // 每次都要初始化，因为需要根据实际的lanelist，计算动态汉明距离限制列表，这个方法会多次调用
         List<String> codeList = new ArrayList<>();
@@ -537,7 +537,7 @@ public class Utils {
         for(int j=0;j<lgList.size();j++) {
           if(j==i) continue;
           LibraryGroup lg2 = lgList.get(j);
-//          if(unscheduledMap.containsKey(lg2.getCode())) continue;
+          if(unscheduledMap.containsKey(lg2.getCode())) continue;
           // 获取文库组2在当前indextype下的index序列
           List<String> list2 = lg2.getLibraryList().stream().map(library -> {
             return library.getIndexSeqMap().get(type);
@@ -564,15 +564,15 @@ public class Utils {
    * 为文库组设置汉明距离不符合的文库组吉因加编号列表
    * @param sourceMap 原始的文库组map
    */
-  public static void setDynamicHammingDistantLimitCodeMap(Map<String, LibraryGroup> sourceMap, List<Lane> laneList) {
+  public static void setDynamicHammingDistantLimitCodeMap(Map<String, LibraryGroup> sourceMap, List<Lane> laneList, Map<String, LibraryGroup> unscheduledMap) {
     // 先初始化汉明距离限制在各种indextype下的列表
-    setHammingDistantLimitCodeMap(sourceMap);
+    setHammingDistantLimitCodeMap(sourceMap, unscheduledMap);
     // 将map转换为list，加上排序
     List<LibraryGroup> libraryGroupList = sourceMap.values().stream().sorted().collect(Collectors.toList());
     // 通过lane列表获取indextype的list
     List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
     for (LibraryGroup lg : libraryGroupList) {
-//      if(unscheduledMap.containsKey(lg.getCode())) continue;
+      if(unscheduledMap.containsKey(lg.getCode())) continue;
       // 遍历当前indextype列表的indextype，将对应的汉明距离限制code列表取交集，设为当前文库组对应当前lane列表下的code限制列表
       List<List<String>> list = new ArrayList<>();
       for (CommonComponent.IndexType indexType : itList) {
@@ -623,9 +623,9 @@ public class Utils {
       lgList = lgList.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
       String discardCode = lgList.get(0).getCode();
       unscheduledMap.put(discardCode, lgList.get(0));
-      sourceMap.remove(discardCode);
+//      sourceMap.remove(discardCode);
       flag = true;
-      setDynamicHammingDistantLimitCodeMap(sourceMap, laneList);
+      setDynamicHammingDistantLimitCodeMap(sourceMap, laneList, unscheduledMap);
       break;
     }
     if(flag) {
@@ -765,6 +765,7 @@ public class Utils {
     // 将map转换为list，按加急/不平衡/数据量排序
     List<LibraryGroup> lgList = libraryGroupMap.values().stream().sorted().collect(Collectors.toList());
     for(LibraryGroup lg:lgList) {
+      if(unscheduledMap.containsKey(lg.getCode())) continue;
       // 文库组是否已经加入到lane中的标识
       boolean inFlag = false;
       // lane的列表按数据量排序，从小往大

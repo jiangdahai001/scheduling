@@ -55,13 +55,13 @@ public class Main {
       solutionCount++;
       System.out.println("solution count: " + solutionCount + "--" + indexTypeList);
 
-      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList);
+      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
       Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
       System.out.println("unscheduledMap:");
       Float unscheduledMapSize = 0f;
       for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
         unscheduledMapSize += entry.getValue().getDataSize();
-//        System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
+        System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
       }
       System.out.println("unscheduledMapSize: " + unscheduledMapSize);
 
