@@ -34,7 +34,7 @@ public class CommonComponent {
       return null;
     }
     public static Boolean isLast(IndexType indexType) {
-      return indexType.equals(P10);
+      return indexType.equals(P8);
     }
     public static IndexType getFirst() {
       return P8;

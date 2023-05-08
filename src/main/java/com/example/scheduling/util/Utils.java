@@ -52,22 +52,26 @@ public class Utils {
     map.put("N", new ArrayList<>());
     int length = list.get(0).getSequence().length();
     for(int i=0; i<length; i++) {
-      float sumA=0,sumT=0,sumC=0,sumG=0,sumN=0,sum=0;
+      float sumA=0,sumT=0,sumC=0,sumG=0,sumN=0,sum=0,sumATCG=0;
       for(CommonComponent.BaseRatioInfo bri:list) {
         char c = bri.getSequence().charAt(i);
         sum += bri.getDataSize();
+        sumATCG += bri.getDataSize();
         switch (c) {
           case 'A' -> sumA += bri.getDataSize();
           case 'T' -> sumT += bri.getDataSize();
           case 'C' -> sumC += bri.getDataSize();
           case 'G' -> sumG += bri.getDataSize();
-          default -> sumN += bri.getDataSize();
+          default -> {
+            sumN += bri.getDataSize();
+            sumATCG -= bri.getDataSize();
+          }
         }
       }
-      map.get("A").add(sumA / sum);
-      map.get("T").add(sumT / sum);
-      map.get("C").add(sumC / sum);
-      map.get("G").add(sumG / sum);
+      map.get("A").add(sumA / sumATCG);
+      map.get("T").add(sumT / sumATCG);
+      map.get("C").add(sumC / sumATCG);
+      map.get("G").add(sumG / sumATCG);
       map.get("N").add(sumN / sum);
     }
     return map;
@@ -341,7 +345,7 @@ public class Utils {
    */
   public static String getCurrentTime() {
     Calendar calendar = Calendar.getInstance();
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd—hhmmss");
     return dateFormat.format(calendar.getTime());
   }
 
@@ -388,6 +392,26 @@ public class Utils {
       }
     }
     return true;
+  }
+
+  /**
+   * 判断能否将一个文库组加入到一个lane中，前提条件是去掉lane中的部分文库组
+   * @param lane lane
+   * @param target 目标文库组
+   * @param excludeList 排除的文库组列表
+   * @return 是否可以排入
+   */
+  public static Boolean canAddLibraryGroupToLane(Lane lane, LibraryGroup target, List<LibraryGroup> excludeList) {
+    // 先把excludeList的内容剔除，后面再加进来
+    excludeList.forEach(lg -> {
+      removeLibraryGroupFromLane(lane, lg);
+    });
+    boolean flag = canAddLibraryGroupToLane(lane, target);
+    // 把excludeList的内容再加进来
+    excludeList.forEach(lg -> {
+      addLibraryGroupToLane(lane, lg);
+    });
+    return flag;
   }
   /**
    * 将一个文库组的列表加入到一个lane中
@@ -765,10 +789,11 @@ public class Utils {
     // 将map转换为list，按加急/不平衡/数据量排序
     List<LibraryGroup> lgList = libraryGroupMap.values().stream().sorted().collect(Collectors.toList());
     for(LibraryGroup lg:lgList) {
+      // 如果文库组已经被放到未排单map了，就跳过
       if(unscheduledMap.containsKey(lg.getCode())) continue;
       // 文库组是否已经加入到lane中的标识
       boolean inFlag = false;
-      // lane的列表按数据量排序，从小往大
+      // lane的列表按数据量排序，从小到大
       laneList = laneList.stream().sorted(Comparator.comparing(Lane::getDataSize)).collect(Collectors.toList());
       for (Lane lane : laneList) {
         // 判断一个文库组是否可以放到某个lane中
@@ -1099,7 +1124,7 @@ public class Utils {
       sb.append("\tunscheduled: ").append(result.getUnscheduledDataSize());
       sb.append("\t").append(result.getNotes());
       System.out.println(sb.toString());
-
+      System.out.println("*******************************************************************");
     }
   }
 
@@ -1172,17 +1197,21 @@ public class Utils {
    * 全遍历的方式找出合适的排单结果，避免使用递归
    * @param libraryGroupList 待排单的文库组列表
    * @param laneList lane列表
+   * @param unscheduledMap 未排单map
    * @param lastNumber 上一个排入lane中的文库组序号
    * @return 返回上一个排入lane中的文库组序号
    */
-  public static int traversalMemory(List<LibraryGroup> libraryGroupList, List<Lane> laneList, int lastNumber) {
+  public static int traversalMemory(List<LibraryGroup> libraryGroupList, List<Lane> laneList,Map<String, LibraryGroup> unscheduledMap, int lastNumber) {
     int number = lastNumber;
+    // 找到在libraryGroupList中，但不在unscheduledMap中的最大的number
+    int largestNumber = getLargestNumber(libraryGroupList, unscheduledMap);
     // 碱基不平衡的情况下，即使全部排完了，还是需要再排，将排进去的移出来换lane，再排
-    if(number == libraryGroupList.size()) {
+    if(number == largestNumber) {
       number = resetLane(laneList, number);
     }
     for(int i=number;i<libraryGroupList.size();i++) {
       LibraryGroup lg = libraryGroupList.get(i);
+      if(unscheduledMap.containsKey(lg.getCode())) continue;
       boolean added = false;
       for (Lane lane : laneList) {
         // 判断一个洗脱文库列表是否可以放到某个lane中
@@ -1207,6 +1236,22 @@ public class Utils {
       break;
     }
     return number;
+  }
+
+  /**
+   * 找到在文库组列表，但不在未排单map中的最大的文库组的number
+   * @param libraryGroupList 文库组列表
+   * @param unscheduledMap 未排单map
+   * @return 最大的number
+   */
+  public static int getLargestNumber(List<LibraryGroup> libraryGroupList, Map<String, LibraryGroup> unscheduledMap) {
+    // 找到在libraryGroupList中，但不在unscheduledMap中的最大的number
+    int largestNumber = 1;
+    for(LibraryGroup lg: libraryGroupList) {
+      if(unscheduledMap.containsKey(lg.getCode())) continue;
+      if(largestNumber<lg.getNumber()) largestNumber = lg.getNumber();
+    }
+    return largestNumber;
   }
   /**
    * 全遍历方式找出合适的排单结果

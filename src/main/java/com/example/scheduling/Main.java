@@ -21,41 +21,33 @@ public class Main {
 //    bruteSolution();
   }
   public static void greedySolution() {
-//    String inFileName = "C:\\Users\\admin\\Desktop\\216.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州1.11.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州3.22.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
+    // 新建文库组map，用于存放本次排单的数据，key为吉因加code，value为文库组对象
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
+    // 读取文件，并将数据存入文库组map，同时获取排单基础信息
     Utils.readExcel(inFileName, libraryGroupMap);
+    // 对文库组map做预处理
     Utils.preprocess(libraryGroupMap);
+    // 未排单文库组map，用于存放未排单的数据，key为吉因加code，value为文库组对象
     Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
+    // indextype列表
     List<CommonComponent.IndexType> indexTypeList = null;
+    // 根据排单基础信息获取lane的数量
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
+    // 初始化lane列表
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-
-    //
-    //
-//    Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList);
-//    Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
-//    System.out.println("unscheduledMap:");
-//    Float unscheduledMapSize = 0f;
-//    for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
-//      unscheduledMapSize += entry.getValue().getDataSize();
-//      System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
-//    }
-//    System.out.println("unscheduledMapSize: " + unscheduledMapSize);
-//    if(libraryGroupMap.size()>1) System.exit(0);
-
-    //
-    //
-
 
     while (true) {
       indexTypeList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
       solutionCount++;
       System.out.println("solution count: " + solutionCount + "--" + indexTypeList);
 
+      // 获取当前lane列表的情况下，文库组受汉明距离限制而不能排到一个lane中的信息
       Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
+      // 根据上面的限制，将肯定不能排入lane列表的文库组移到未排单map
       Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
       System.out.println("unscheduledMap:");
       Float unscheduledMapSize = 0f;
@@ -65,26 +57,25 @@ public class Main {
       }
       System.out.println("unscheduledMapSize: " + unscheduledMapSize);
 
+      // 贪心算法将文库组放到lane列表中
       Utils.putLibraryGroupInLane(libraryGroupMap, laneList, unscheduledMap);
+      // 新建结果对象，并赋值
       CommonComponent.ScheduledResult sr = new CommonComponent.ScheduledResult();
       sr.setLaneList(laneList);
       sr.setUnscheduledLibraryGroupMap(unscheduledMap);
       Utils.setScheduledResultInfo(sr);
       resultList.add(sr);
+      // 判断是否遍历完了所有可能的indextype组合，如果遍历完了，就跳出循环
       boolean finished = indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast);
       if(finished) break;
+      // 如果没有遍历完所有indextype组合，就初始化lane列表和未排单列表，继续下一次排单
       Utils.indexTypeListPlus(indexTypeList, 1);
       laneList = Utils.initLaneList(laneListSize, indexTypeList);
       unscheduledMap = new HashMap<>();
     }
+    // 将排单结果打印出来
     Utils.printResult(resultList, false);
-    System.out.println("unscheduledMap:");
-    Float unsize = 0f;
-    for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
-      unsize += entry.getValue().getDataSize();
-      System.out.println(entry.getKey() + ": " + entry.getValue().getNumber() +"--数据量: "+entry.getValue().getDataSize() +"--加急: "+entry.getValue().getUrgent());
-    }
-    System.out.println("unscheduledMapSize: " + unsize);
+    // 将排单结果输出到excel
     resultList.forEach(result -> {
       String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
       Utils.writeExcel(fileName, result, false);
@@ -98,10 +89,10 @@ public class Main {
   }
   public static void bruteSolutionMulti() {
     System.out.println("hello brute");
-//    String inFileName = "C:\\Users\\admin\\Desktop\\216.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州1.11.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州3.22.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);
     Utils.preprocess(libraryGroupMap);
@@ -130,7 +121,6 @@ public class Main {
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);
     Utils.preprocess(libraryGroupMap);
-    Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
     // 将map转换为list
@@ -142,7 +132,8 @@ public class Main {
     while (true) {
       solutionCount++;
       System.out.println("solution count: " + solutionCount);
-      lastNumber = Utils.traversalMemory(libraryGroupList, laneList, lastNumber);
+      Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
+      lastNumber = Utils.traversalMemory(libraryGroupList, laneList, unscheduledMap, lastNumber);
 //      System.out.println("***************************************************** 移位完成后：");
 //      laneList.forEach(lane-> {
 //        lane.getLibraryGroupList().forEach(libraryGroup1 -> {
