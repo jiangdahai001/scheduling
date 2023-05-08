@@ -23,8 +23,8 @@ public class Main {
   public static void greedySolution() {
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     // 新建文库组map，用于存放本次排单的数据，key为吉因加code，value为文库组对象
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     // 读取文件，并将数据存入文库组map，同时获取排单基础信息

@@ -345,12 +345,15 @@ public class Utils {
    */
   public static String getCurrentTime() {
     Calendar calendar = Calendar.getInstance();
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd—hhmmss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-hhmmss");
     return dateFormat.format(calendar.getTime());
   }
 
   /**
-   * 判断能否往lane中加入一个文库组的列表
+   * 判断能否将文库组列表加入到一个lane中
+   * @param lane 待加入的目标lane
+   * @param list 待加入的文库组列表
+   * @return 能否加入
    */
   public static Boolean canAddLibraryGroupListToLane(Lane lane, List<LibraryGroup> list) {
     Float lgDataSize = 0f;
@@ -380,6 +383,8 @@ public class Utils {
         laneDataSizeTmp = lane.getDataSizeFloor();
       }
       if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
+        // ToDO
+        // 这里目前只是判断当前的数据需要满足情况，有一种情况未考虑，就是当前的情况不满足，但是后续在lane中新增文库组后，条件又满足了
         System.out.println("**&&*&*&*&&(*(&*&*&*");
         return false;
       }
@@ -394,6 +399,67 @@ public class Utils {
     return true;
   }
 
+  /**
+   * 查看当前lane中，文库组列表能否加入到lane列表的其他lane中
+   * @param currentLaneIndex 当前lane在列表中的index
+   * @param targetList 文库组列表
+   * @param laneList lane列表
+   * @return 可否加入
+   */
+  public static Boolean canAddLibraryGroupListToLane(Integer currentLaneIndex, List<LibraryGroup> targetList, List<Lane> laneList) {
+    Map<LibraryGroup, Lane> map = new HashMap<>();
+    boolean allFit = true;
+    for(LibraryGroup lg:targetList) {
+      boolean singleFit = false;
+      for(int i=0;i<laneList.size();i++) {
+        if(i==currentLaneIndex) continue;
+        Lane lane = laneList.get(i);
+        if(canAddLibraryGroupToLane(lane, lg)) {
+          addLibraryGroupToLane(lane, lg);
+          singleFit = true;
+          map.put(lg, lane);
+        }
+        if(singleFit) break;
+      }
+      if(!singleFit) {
+        allFit = false;
+        break;
+      }
+    }
+    map.forEach((lg, lane) -> {
+      removeLibraryGroupFromLane(lane, lg);
+    });
+    return allFit;
+  }
+  /**
+   * 将当前lane中的文库组列表，从当前lane中除去，加入到lane列表的其他lane中
+   * @param currentLaneIndex 当前lane在列表中的index
+   * @param targetList 文库组列表
+   * @param laneList lane列表
+   */
+  public static void addLibraryGroupListToLane(Integer currentLaneIndex, List<LibraryGroup> targetList, List<Lane> laneList) {
+    // 先将目标列表移出当前的lane
+    for(LibraryGroup lg:targetList) {
+      for(int i=0;i<laneList.size();i++) {
+        Lane lane = laneList.get(i);
+        if(i == currentLaneIndex) {
+          removeLibraryGroupFromLane(lane, lg);
+        }
+      }
+    }
+    for(LibraryGroup lg:targetList) {
+      boolean singleFit = false;
+      for(int i=0;i<laneList.size();i++) {
+        Lane lane = laneList.get(i);
+        if(i==currentLaneIndex) continue;
+        if(canAddLibraryGroupToLane(lane, lg)) {
+          addLibraryGroupToLane(lane, lg);
+          singleFit = true;
+        }
+        if(singleFit) break;
+      }
+    }
+  }
   /**
    * 判断能否将一个文库组加入到一个lane中，前提条件是去掉lane中的部分文库组
    * @param lane lane
@@ -807,39 +873,27 @@ public class Utils {
       if(inFlag) continue;
       // 都加不进去，尝试将同这个文库组冲突的已经在lane中的文库组移动到别的lane，然后再试一下
       for (int i = 0; i < laneList.size(); i++) {
-        Lane previousLane = laneList.get(i);
+        Lane currentLane = laneList.get(i);
         // 当前文库组对应的限制code列表
-        List<String> limitCodeList = lg.getHammingDistantLimitCodeMap().get(previousLane.getIndexType());
+        List<String> limitCodeList = lg.getHammingDistantLimitCodeMap().get(currentLane.getIndexType());
         // 当前lane对应的code列表
-        List<String> previousLaneCodeList = previousLane.getLibraryGroupList().stream().map(LibraryGroup::getCode).collect(Collectors.toList());
+        List<String> currentLaneCodeList = currentLane.getLibraryGroupList().stream().map(LibraryGroup::getCode).collect(Collectors.toList());
         List<List<String>> listList = new ArrayList<>();
         listList.add(limitCodeList);
-        listList.add(previousLaneCodeList);
+        listList.add(currentLaneCodeList);
         // 交集就是待移位的文库组code列表
         List<String> targetCodeList = getIntersection(listList);
         // 待移位的文库组列表
         List<LibraryGroup> targetLibraryGroupList = targetCodeList.stream().map(libraryGroupMap::get).collect(Collectors.toList());
-        for(int j = 0;j < laneList.size(); j++) {
-          if(j == i) continue;
-          Lane targetLane = laneList.get(j);
-          if(canAddLibraryGroupListToLane(targetLane, targetLibraryGroupList)) {
-            // 如果可以加入到其他的lane，就加入到其他的lane，并从之前的lane中删掉，然后把当前文库组放到之前的lane中
-            addLibraryGroupListToLane(targetLane, targetLibraryGroupList);
-            targetLibraryGroupList.forEach(targetLibraryGroup -> {
-              removeLibraryGroupFromLane(previousLane, targetLibraryGroup);
-            });
-            if(canAddLibraryGroupToLane(previousLane, lg)) {
-              addLibraryGroupToLane(previousLane, lg);
-              inFlag = true;
-              break;
-            } else {
-              // 可能因为数据量等原因，还是无法加入，就重新加入到之前的lane中，然后新lane加入的也要移出
-              targetLibraryGroupList.forEach(targetLibraryGroup -> {
-                addLibraryGroupToLane(previousLane, targetLibraryGroup);
-                removeLibraryGroupFromLane(targetLane, targetLibraryGroup);
-              });
-            }
-          }
+        // 判断能否将待移位的文库组放到当前lane以外的其他lane中（可以是一个，也可以是多个）
+        boolean targetListRearrangeFit = canAddLibraryGroupListToLane(i, targetLibraryGroupList, laneList);
+        // 判断当前文库组在待移位文库组移出lane之后能否加入到lane中
+        boolean currentFit = canAddLibraryGroupToLane(currentLane, lg, targetLibraryGroupList);
+        // 如果条件满足，就把待移位的文库组放到其他lane，当前文库组放到当前lane
+        if(targetListRearrangeFit && currentFit) {
+          addLibraryGroupListToLane(i, targetLibraryGroupList, laneList);
+          addLibraryGroupToLane(currentLane, lg);
+          inFlag = true;
         }
         if(inFlag) break;
       }
@@ -1180,7 +1234,8 @@ public class Utils {
       }
     });
     Utils.setLibraryGroupNumber(libraryGroupMap);
-//    Utils.setHammingDistantLimitCodeMap(libraryGroupMap);
+
+//    Utils.setHammingDistantLimitCodeMap(libraryGroupMap, new HashMap<>());
 //    libraryGroupMap.values().stream().sorted().forEach(lg -> {
 //      List<Integer> numberList = lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8).stream().map(code -> {
 //        return libraryGroupMap.get(code).getNumber();
