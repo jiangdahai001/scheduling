@@ -1,11 +1,11 @@
 package com.example.scheduling;
 
+import com.example.scheduling.solution.TaskRunner;
 import com.example.scheduling.util.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.example.scheduling.solution.TaskRunner.multiBrute;
 
 public class Main {
   // 排单结果列表
@@ -16,14 +16,14 @@ public class Main {
    * @param args
    */
   public static void main(String[] args) {
-    greedySolution();
-//    bruteSolutionMulti();
+//    greedySolution();
+    bruteSolutionMulti();
 //    bruteSolution();
   }
   public static void greedySolution() {
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     // 新建文库组map，用于存放本次排单的数据，key为吉因加code，value为文库组对象
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
@@ -49,13 +49,13 @@ public class Main {
       Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
       // 根据上面的限制，将肯定不能排入lane列表的文库组移到未排单map
       Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
-      System.out.println("unscheduledMap:");
-      Float unscheduledMapSize = 0f;
-      for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
-        unscheduledMapSize += entry.getValue().getDataSize();
-        System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
-      }
-      System.out.println("unscheduledMapSize: " + unscheduledMapSize);
+//      System.out.println("unscheduledMap:");
+//      Float unscheduledMapSize = 0f;
+//      for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
+//        unscheduledMapSize += entry.getValue().getDataSize();
+//        System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
+//      }
+//      System.out.println("unscheduledMapSize: " + unscheduledMapSize);
 
       // 贪心算法将文库组放到lane列表中
       Utils.putLibraryGroupInLane(libraryGroupMap, laneList, unscheduledMap);
@@ -78,7 +78,7 @@ public class Main {
     // 将排单结果输出到excel
     resultList.forEach(result -> {
       String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
-      Utils.writeExcel(fileName, result, false);
+      Utils.writeExcel(fileName, result, true);
       System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
       try {
         Thread.sleep(1000);
@@ -90,28 +90,28 @@ public class Main {
   public static void bruteSolutionMulti() {
     System.out.println("hello brute");
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);
     Utils.preprocess(libraryGroupMap);
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-    resultList = multiBrute(libraryGroupMap, laneList, false);
+    resultList = TaskRunner.multiBrute(libraryGroupMap, laneList, true);
     Utils.printResult(resultList, true);
-    resultList.forEach(result -> {
-      if(result.getSuccess()) {
-        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-multi.xlsx";
-        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
-        Utils.writeExcel(fileName, result, true);
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    });
+//    resultList.forEach(result -> {
+//      if(result.getSuccess()) {
+//        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-multi.xlsx";
+//        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+//        Utils.writeExcel(fileName, result, true);
+//        try {
+//          Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//          e.printStackTrace();
+//        }
+//      }
+//    });
   }
   public static void bruteSolution() {
     System.out.println("hello brute");

@@ -1,77 +1,47 @@
 package com.example.scheduling;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class Test {
-  public static void main(String[] args) {
-    mapTest();
+  public static void main(String[] args) throws Exception{
+    doSomethingWithTimeout(2);
   }
-  public static void mapTest() {
-    Map<List<String>, List<Integer>> map = new HashMap<>();
-    List<String> k1 = new ArrayList<>();
-    k1.add("ss");
-    k1.add("bb");
-    List<Integer> v1 = new ArrayList<>();
-    v1.add(1);
-    map.put(k1, v1);
-    System.out.println(map);
-    List<String> kk = new ArrayList<>();
-    kk.add("ss");
-    kk.add("bb");
-    System.out.println(map.get(kk));
-  }
-  public static String method(int threadNum, int timeOut, String abc) {
-    String r = null;
-    ExecutorService es = Executors.newFixedThreadPool(threadNum);
-    Future<String> future = es.submit(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        System.out.println(abc);
-        return demo(abc);
-      }
+  public static boolean doSomethingWithTimeout(int timeoutInSeconds) throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicBoolean result = new AtomicBoolean(false);
+
+    Thread taskThread = new Thread(() -> {
+      // 执行需要超时的任务
+      boolean taskResult = executeTask();
+      result.set(taskResult);
+      latch.countDown();
     });
-    try {
-      r = future.get(timeOut, TimeUnit.SECONDS);
-    } catch (TimeoutException te) {
-      future.cancel(true);
-      System.out.println("输出异常：" + te.getMessage());
-    } catch(Exception e) {
-      System.out.println("其他异常！！！");
+
+    taskThread.start();
+    System.out.println("main 启动线程");
+    boolean timeout = !latch.await(timeoutInSeconds, TimeUnit.SECONDS);
+    if (timeout) {
+      // 超时，中断任务线程
+      taskThread.interrupt();
+      return false;
     }
-    // 关闭线程池
-    es.shutdown();
-    return r;
+    System.out.println("main 结束");
+    return result.get();
   }
-  public static void main1(String[] args) throws ExecutionException, InterruptedException, TimeoutException {
-    ExecutorService executorService = Executors.newFixedThreadPool(2);
-    Future<?> future = executorService.submit(() -> {
-      try {
-        demo("aa");
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    });
-    String threadName = Thread.currentThread().getName();
-    System.out.println(threadName + "获取的结果 -- start");
-//    Object result = future.get(100, TimeUnit.MILLISECONDS);
+
+  private static boolean executeTask() {
+    // 执行需要超时的任务
+    System.out.println("开始执行任务");
     try {
-      Object result = future.get(10000, TimeUnit.MILLISECONDS);
-      System.out.println(System.currentTimeMillis() + "," + threadName + "获取的结果 -- end :" + result);
-    } catch (Exception e) {
-      System.out.println(System.currentTimeMillis() + "," + threadName + "获取的结果异常:" + e.toString());
+      Thread.sleep(3000);
+    } catch (InterruptedException e) {
+      System.out.println("执行任务超时");
+      return false;
     }
-    future.cancel(true);
-    System.out.println(System.currentTimeMillis() + "," + threadName + "获取的结果 -- cancel");
-    executorService.shutdown();
-  }
-  private static String demo(String aa) throws InterruptedException {
-    String threadName = Thread.currentThread().getName();
-    System.out.println(threadName + ",执行 demo -- start");
-    TimeUnit.SECONDS.sleep(5);
-    System.out.println(threadName + ",执行 demo -- end");
-    return "test---"+ aa;
+    System.out.println("结束执行任务");
+    return true;
   }
 }
 

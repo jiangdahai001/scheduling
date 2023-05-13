@@ -1204,10 +1204,10 @@ public class Utils {
     List<Lane> laneList = new ArrayList<>();
     for(int i=0;i<size;i++) {
       Lane lane = new Lane();
-//      lane.setDataSizeCeiling(1400f);
-//      lane.setDataSizeFloor(1300f);
-      lane.setDataSizeCeiling(1450f);
-      lane.setDataSizeFloor(1350f);
+      lane.setDataSizeCeiling(1400f);
+      lane.setDataSizeFloor(1300f);
+//      lane.setDataSizeCeiling(1450f);
+//      lane.setDataSizeFloor(1350f);
       laneList.add(lane);
     }
     if(indexTypeList != null) {
@@ -1235,7 +1235,7 @@ public class Utils {
     });
     Utils.setLibraryGroupNumber(libraryGroupMap);
 
-//    Utils.setHammingDistantLimitCodeMap(libraryGroupMap, new HashMap<>());
+    Utils.setHammingDistantLimitCodeMap(libraryGroupMap, new HashMap<>());
 //    libraryGroupMap.values().stream().sorted().forEach(lg -> {
 //      List<Integer> numberList = lg.getHammingDistantLimitCodeMap().get(CommonComponent.IndexType.P8).stream().map(code -> {
 //        return libraryGroupMap.get(code).getNumber();

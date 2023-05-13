@@ -37,8 +37,8 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     while (!isCancelled) {
       Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
 
-      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
-      Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
+//      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
+//      Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
 //      System.out.println("unscheduledMap:");
 //      Float unscheduledMapSize = 0f;
 //      for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {

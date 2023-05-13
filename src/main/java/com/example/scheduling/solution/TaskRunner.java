@@ -14,7 +14,7 @@ public class TaskRunner {
   // 线程池最大线程数
   private static final int MAX_THREADS = 10;
   // 单线程超时时间值
-  private static final int TIMEOUT = 5;
+  private static final int TIMEOUT = 1;
   // 单线程超时单位
   private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
@@ -63,15 +63,15 @@ public class TaskRunner {
           future.cancel(true);
           task.cancel();
 
-          laneList.stream().forEach(lane -> {
-            StringBuilder sbLane = new StringBuilder();
-            Float size = 0f;
-            for(LibraryGroup lg:lane.getLibraryGroupList()) {
-              size += lg.getDataSize();
-              sbLane.append(lg.getNumber()).append(",");
-            }
-            System.out.println("lane data size: "+size +"--library group("+lane.getLibraryGroupList().size() + "): "+sbLane.toString());
-          });
+//          laneList.stream().forEach(lane -> {
+//            StringBuilder sbLane = new StringBuilder();
+//            Float size = 0f;
+//            for (LibraryGroup lg : lane.getLibraryGroupList()) {
+//              size += lg.getDataSize();
+//              sbLane.append(lg.getNumber()).append(",");
+//            }
+//            System.out.println("lane data size: " + size + "--library group(" + lane.getLibraryGroupList().size() + "): " + sbLane.toString());
+//          });
 
 
           System.out.println(itList + "========= timeout exit =========");
