@@ -44,10 +44,14 @@ public class TaskRunner {
 
     // submit tasks to thread pool
     List<Future<?>> futures = new ArrayList<Future<?>>();
+    for(Task task: tasks) {
+      Future<?> future = executor.submit(task);
+      futures.add(future);
+    }
     try {
-      for (Task task : tasks) {
-        Future<?> future = executor.submit(task);
-        futures.add(future);
+      for(int i=0;i<tasks.size();i++) {
+        Task task = tasks.get(i);
+        Future<?> future = futures.get(i);
         List<CommonComponent.IndexType> itList = task.getLaneList().stream().map(Lane::getIndexType).collect(Collectors.toList());
         try {
           CommonComponent.ScheduledResult sr = (CommonComponent.ScheduledResult) future.get(TIMEOUT, TIME_UNIT);
@@ -55,6 +59,9 @@ public class TaskRunner {
           if(sr.getSuccess() && findOne) {
             for(Future<?> f:futures) {
               f.cancel(true);
+            }
+            for(Task t:tasks) {
+              t.cancel();
             }
             System.out.println(itList + "========= find one exit =========");
             break;

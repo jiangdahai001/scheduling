@@ -73,7 +73,7 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
         sr.setLaneList(laneList);
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);
         Utils.setScheduledResultInfo(sr);
-//        if(!sr.getSuccess()) continue;
+        if(!sr.getSuccess()) continue;
         System.out.println(itList + "======== success ======");
         break;
       }

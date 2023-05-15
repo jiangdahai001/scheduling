@@ -90,8 +90,8 @@ public class Main {
   public static void bruteSolutionMulti() {
     System.out.println("hello brute");
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);
