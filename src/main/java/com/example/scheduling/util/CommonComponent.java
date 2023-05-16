@@ -155,7 +155,7 @@ public class CommonComponent {
       this.dataSize = dataSize;
     }
   }
-  // 全局变量，排单基础信息
+  // 全局变量，排单基础信息，排单结果
   public static class SchedulingInfo {
     // 排单基础信息单例
     private static SchedulingInfo instance = null;
@@ -167,12 +167,15 @@ public class CommonComponent {
     private int libraryGroupSize;
     // 加急排单文库组数
     private int urgentLibraryGroupSize;
+    // 排单结果列表
+    private List<ScheduledResult> resultList;
 
     private SchedulingInfo(){
       this.dataSize = 0f;
       this.urgentDataSize = 0f;
       this.libraryGroupSize = 0;
       this.urgentLibraryGroupSize = 0;
+      this.resultList = new ArrayList<>();
     }
     public static SchedulingInfo getInstance() {
       if(instance == null) {
@@ -201,6 +204,14 @@ public class CommonComponent {
 
     public void setUrgentLibraryGroupSize(int urgentLibraryGroupSize) {
       this.urgentLibraryGroupSize = urgentLibraryGroupSize;
+    }
+
+    public List<ScheduledResult> getResultList() {
+      return resultList;
+    }
+
+    public void setResultList(List<ScheduledResult> resultList) {
+      this.resultList = resultList;
     }
 
     public int getLibraryGroupSize() {

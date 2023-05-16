@@ -4,21 +4,23 @@ import com.example.scheduling.Lane;
 import com.example.scheduling.LibraryGroup;
 import com.example.scheduling.util.CommonComponent;
 import com.example.scheduling.util.Utils;
+import org.apache.poi.ss.formula.functions.T;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 public class Task implements Callable<CommonComponent.ScheduledResult> {
   private volatile boolean isCancelled;
   private final Map<String, LibraryGroup> libraryGroupMap;
   private final List<Lane> laneList;
+  private final CountDownLatch countDownLatch;
 
-  public Task(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList) {
+  public Task(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, CountDownLatch countDownLatch) {
     this.libraryGroupMap = libraryGroupMap;
     this.laneList = laneList;
+    this.countDownLatch = countDownLatch;
   }
 
   /**
@@ -34,6 +36,17 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
     // 最后一个放到lane中的文库组的编号，初始是0，说明还没有放
     int lastNumber = 0;
+    // 加上定时器，设置每个任务的运行最大时长
+    Timer timer = new Timer();
+    TimerTask timerTask = new TimerTask() {
+      @Override
+      public void run() {
+        isCancelled = true;
+        timer.cancel();
+      }
+    };
+    timer.schedule(timerTask, 200);
+
     while (!isCancelled) {
       Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
 
@@ -74,6 +87,7 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);
         Utils.setScheduledResultInfo(sr);
         if(!sr.getSuccess()) continue;
+        countDownLatch.countDown();
         System.out.println(itList + "======== success ======");
         break;
       }
@@ -104,5 +118,9 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
 
   public List<Lane> getLaneList() {
     return laneList;
+  }
+
+  public CountDownLatch getCountDownLatch() {
+    return countDownLatch;
   }
 }

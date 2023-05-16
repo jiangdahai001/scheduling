@@ -385,7 +385,7 @@ public class Utils {
       if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
         // ToDO
         // 这里目前只是判断当前的数据需要满足情况，有一种情况未考虑，就是当前的情况不满足，但是后续在lane中新增文库组后，条件又满足了
-        System.out.println("**&&*&*&*&&(*(&*&*&*");
+//        System.out.println("**&&*&*&*&&(*(&*&*&*");
         return false;
       }
     }
