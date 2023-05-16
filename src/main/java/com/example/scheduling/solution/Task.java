@@ -7,11 +7,14 @@ import com.example.scheduling.util.Utils;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class Task implements Callable<CommonComponent.ScheduledResult> {
+  // 线程超时时间值
+  private static final int TIMEOUT = 1;
+  // 线程超时单位
+  private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
   private volatile boolean isCancelled;
   private final Map<String, LibraryGroup> libraryGroupMap;
   private final List<Lane> laneList;
@@ -24,11 +27,33 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
   }
 
   /**
-   * 获取排单结果
+   * 获取排单结果的线程任务，这里主要用作新启动一个线程用于实际排单，当前线程阻塞等待结果或超时
    * @return 排单结果
    */
   @Override
   public CommonComponent.ScheduledResult call() {
+    CommonComponent.ScheduledResult sr = null;
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<CommonComponent.ScheduledResult> future = executor.submit(this::callBusiness);
+    try {
+      sr = future.get(TIMEOUT, TIME_UNIT);
+      if(sr.getSuccess()) countDownLatch.countDown();
+    } catch (TimeoutException e) {
+      System.out.println("task timeout");
+    } catch (Exception e) {
+      System.out.println("task interrupted cause thread been interrupted");
+    } finally {
+      executor.shutdownNow();
+    }
+    return sr;
+  }
+
+
+  /**
+   * 实际的获取排单结果的任务
+   * @return 排单结果
+   */
+  public CommonComponent.ScheduledResult callBusiness() {
     CommonComponent.ScheduledResult sr = new CommonComponent.ScheduledResult();
     // 将map转换为list，并排序
     List<LibraryGroup> libraryGroupList = libraryGroupMap.values().stream().sorted().collect(Collectors.toList());
@@ -37,15 +62,15 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     // 最后一个放到lane中的文库组的编号，初始是0，说明还没有放
     int lastNumber = 0;
     // 加上定时器，设置每个任务的运行最大时长
-    Timer timer = new Timer();
-    TimerTask timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        isCancelled = true;
-        timer.cancel();
-      }
-    };
-    timer.schedule(timerTask, 200);
+//    Timer timer = new Timer();
+//    TimerTask timerTask = new TimerTask() {
+//      @Override
+//      public void run() {
+//        isCancelled = true;
+//        timer.cancel();
+//      }
+//    };
+//    timer.schedule(timerTask, 200);
 
     while (!isCancelled) {
       Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
@@ -87,7 +112,7 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);
         Utils.setScheduledResultInfo(sr);
         if(!sr.getSuccess()) continue;
-        countDownLatch.countDown();
+//        countDownLatch.countDown();
         System.out.println(itList + "======== success ======");
         break;
       }

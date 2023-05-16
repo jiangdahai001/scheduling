@@ -68,7 +68,7 @@ public class TaskRunner {
           } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
           }
-          list.add(sr);
+          if(sr!=null) list.add(sr);
         }
       }
       for (Future<?> f : futures) {
