@@ -25,7 +25,7 @@ public class TaskRunner {
    * @param expectedCount 找到多少种可能，就停止排单
    * @return 排单结果列表
    */
-  public static List<CommonComponent.ScheduledResult> multiBrute(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, int expectedCount){
+  public static List<CommonComponent.ScheduledResult> backtrace(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, int expectedCount){
     List<CommonComponent.ScheduledResult> list = CommonComponent.SchedulingInfo.getInstance().getResultList();
     // 创建线程池
     ExecutorService executor = Executors.newFixedThreadPool(MAX_THREADS);

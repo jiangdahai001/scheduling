@@ -17,8 +17,7 @@ public class Main {
    */
   public static void main(String[] args) {
 //    greedySolution();
-    bruteSolutionMulti();
-//    bruteSolution();
+    backtraceSolution();
   }
   public static void greedySolution() {
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
@@ -87,7 +86,7 @@ public class Main {
       }
     });
   }
-  public static void bruteSolutionMulti() {
+  public static void backtraceSolution() {
     System.out.println("hello brute");
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
@@ -98,7 +97,7 @@ public class Main {
     Utils.preprocess(libraryGroupMap);
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-    resultList = TaskRunner.multiBrute(libraryGroupMap, laneList, 3);
+    resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 3);
     Utils.printResult(resultList, true);
 //    resultList.forEach(result -> {
 //      if(result.getSuccess()) {
@@ -112,54 +111,5 @@ public class Main {
 //        }
 //      }
 //    });
-  }
-  public static void bruteSolution() {
-    System.out.println("hello brute");
-    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州2.16.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州3.22.xlsx";
-//    String inFileName = "C:\\Users\\admin\\Desktop\\input表苏州1.11.xlsx";
-    Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
-    Utils.readExcel(inFileName, libraryGroupMap);
-    Utils.preprocess(libraryGroupMap);
-    int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
-    List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-    // 将map转换为list
-    List<LibraryGroup> libraryGroupList = new ArrayList<>(libraryGroupMap.values());
-    // 将list内容按数据量排序
-    libraryGroupList = libraryGroupList.stream().sorted().collect(Collectors.toList());
-    // 最后一个放到lane中的文库组的编号，初始是0，说明还没有放
-    int lastNumber = 0;
-    while (true) {
-      solutionCount++;
-      System.out.println("solution count: " + solutionCount);
-      Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
-      lastNumber = Utils.traversalMemory(libraryGroupList, laneList, unscheduledMap, lastNumber);
-//      System.out.println("***************************************************** 移位完成后：");
-//      laneList.forEach(lane-> {
-//        lane.getLibraryGroupList().forEach(libraryGroup1 -> {
-//          System.out.print(libraryGroup1.getNumber()+";");
-//        });
-//        System.out.println("");
-//      });
-//      System.out.println("*****************************************************");
-      // 全部文库组都排到lane中了
-      if(lastNumber==libraryGroupList.size()) {
-        CommonComponent.ScheduledResult sr = new CommonComponent.ScheduledResult();
-        sr.setLaneList(laneList);
-        sr.setUnscheduledLibraryGroupMap(unscheduledMap);
-        Utils.setScheduledResultInfo(sr);
-        if(!sr.getSuccess()) continue;
-        System.out.println("success ======");
-        resultList.add(sr);
-        break;
-      }
-      // 全部遍历了，无法排出来
-      // lane中数据为空，说明全部都试了，无法排出来
-      if(lastNumber == 0) {
-        System.out.println("failed ======");
-        break;
-      }
-    }
-    Utils.printResult(resultList, true);
   }
 }
