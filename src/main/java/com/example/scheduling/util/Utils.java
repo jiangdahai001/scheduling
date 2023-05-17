@@ -1249,7 +1249,7 @@ public class Utils {
   }
 
   /**
-   * 全遍历的方式找出合适的排单结果，避免使用递归
+   * 回溯的方式找出合适的排单结果，避免使用递归
    * @param libraryGroupList 待排单的文库组列表
    * @param laneList lane列表
    * @param unscheduledMap 未排单map
@@ -1262,16 +1262,16 @@ public class Utils {
     int largestNumber = getLargestNumber(libraryGroupList, unscheduledMap);
     // 碱基不平衡的情况下，即使全部排完了，还是需要再排，将排进去的移出来换lane，再排
     if(number == largestNumber) {
-      number = resetLane(laneList, number);
+      number = getBacktraceNumber(laneList, number);
     }
     for(int i=number;i<libraryGroupList.size();i++) {
       LibraryGroup lg = libraryGroupList.get(i);
       if(unscheduledMap.containsKey(lg.getCode())) continue;
       boolean added = false;
       for (Lane lane : laneList) {
-        // 判断一个洗脱文库列表是否可以放到某个lane中
-        if (Utils.canAddLibraryGroupToLane(lane, lg)) {
-          Utils.addLibraryGroupToLane(lane, lg);
+        // 判断一个文库组是否可以放到某个lane中
+        if (canAddLibraryGroupToLane(lane, lg)) {
+          addLibraryGroupToLane(lane, lg);
           added = true;
           number = lg.getNumber();
           break;
@@ -1279,7 +1279,7 @@ public class Utils {
       }
       if (added) continue;
       // 如果文库组无法加入到lane中，说明之前的排单是有问题的，要调整
-      number = resetLane(laneList, number);
+      number = getBacktraceNumber(laneList, number);
 //      System.out.println("***************************************************** 移位完成后：");
 //      laneList.forEach(lane-> {
 //        lane.getLibraryGroupList().forEach(libraryGroup1 -> {
@@ -1326,7 +1326,7 @@ public class Utils {
 //        Lane lane = laneList.get(i);
 //        System.out.println("************************ success!!!! *****************************" + lane.getDataSize());
 //        if(lane.getDataSize() > lane.getDataSizeCeiling() || lane.getDataSize() < lane.getDataSizeFloor()) {
-//          number = resetLane(laneList, lastNumber);
+//          number = getBacktraceNumber(laneList, lastNumber);
 //          return traversal(libraryGroupList, laneList, number);
 //        }
 //      }
@@ -1349,19 +1349,19 @@ public class Utils {
       }
       // 如果文库组无法加入到lane中，说明之前的排单是有问题的，要调整
       if(!added) {
-        number = resetLane(laneList, number);
+        number = getBacktraceNumber(laneList, number);
         break;
       }
     }
     return traversal(libraryGroupList, laneList, number);
   }
   /**
-   * 调整lane列表
+   * 调整lane列表，并获取回溯编号
    * @param laneList lane列表
    * @param number 待移位的文库组number
    * @return 返回需要重新排的第一个文库组的number
    */
-  public static Integer resetLane(List<Lane> laneList, int number) {
+  public static Integer getBacktraceNumber(List<Lane> laneList, int number) {
     // 如果lane列表是空的，还需要调整，说明全部可能已经试过了
     if(number == 0) return number;
     // 待移位的libraryGroup
@@ -1391,14 +1391,14 @@ public class Utils {
 //    System.out.println("待移位文库组，lane: " + laneIndex + "--编号" + lg.getNumber());
 //    System.out.println("*****************************************************");
     // 将待移位的libraryGroup移出之前所在的lane
-    Utils.removeLibraryGroupFromLane(laneList.get(laneIndex), lg);
+    removeLibraryGroupFromLane(laneList.get(laneIndex), lg);
     // 如果待移位的libraryGroup不在最后一个lane，那就放到下一个lane中试试
     if(laneIndex < laneList.size() -1) {
       boolean flag = false;
       for(int i =laneIndex + 1;i<laneList.size();i++) {
-        flag = Utils.canAddLibraryGroupToLane(laneList.get(i), lg);
+        flag = canAddLibraryGroupToLane(laneList.get(i), lg);
         if(flag) {
-          Utils.addLibraryGroupToLane(laneList.get(i), lg);
+          addLibraryGroupToLane(laneList.get(i), lg);
           return lg.getNumber();
         }
       }
@@ -1406,7 +1406,7 @@ public class Utils {
     // 如果所有的lane都放不进去，就只能调整上一个libraryGroup了
     // 如果本身这个libraryGroup就是在最后一个lane，就只能调整上一个libraryGroup了
     number = Utils.getLastNumber(laneList);
-    return resetLane(laneList, number);
+    return getBacktraceNumber(laneList, number);
   }
 
   /**
@@ -1422,5 +1422,30 @@ public class Utils {
       list.add(number);
     }
     return list;
+  }
+
+  /**
+   * 判断文库组能否加入到未排单map中，条件1，不能是加急的；2，未排单map的数据量应小于总数量-所有lane的最小数据量之和
+   * @param libraryGroup 待加入未排单map的文库组
+   * @param unscheduledMap 未排单文库组
+   * @param laneList lane列表
+   * @return 返回能否加入
+   */
+  public static Boolean canAddLibraryGroupToUnscheduledMap(LibraryGroup libraryGroup, Map<String, LibraryGroup> unscheduledMap, List<Lane> laneList) {
+    boolean flag = false;
+    if(libraryGroup.getUrgent()) return false;
+    Float datasize = 0f;
+    Float laneDataSizeFloor = 0f;
+    for(LibraryGroup lg:unscheduledMap.values()) {
+      datasize += lg.getDataSize();
+    }
+    for(Lane l:laneList) {
+      laneDataSizeFloor += l.getDataSizeFloor();
+    }
+    CommonComponent.SchedulingInfo si = CommonComponent.SchedulingInfo.getInstance();
+    if(datasize < si.getDataSize() - laneDataSizeFloor) {
+      flag = true;
+    }
+    return flag;
   }
 }

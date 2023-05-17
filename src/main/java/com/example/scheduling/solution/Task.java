@@ -38,9 +38,9 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
       sr = future.get(TIMEOUT, TIME_UNIT);
       if(sr.getSuccess()) countDownLatch.countDown();
     } catch (TimeoutException e) {
-      System.out.println("task timeout");
+//      System.out.println("task timeout");
     } catch (Exception e) {
-      System.out.println("task interrupted cause thread been interrupted");
+//      System.out.println("task interrupted cause thread been interrupted");
     } finally {
       executor.shutdownNow();
     }
@@ -60,49 +60,11 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
     // 最后一个放到lane中的文库组的编号，初始是0，说明还没有放
     int lastNumber = 0;
-    // 加上定时器，设置每个任务的运行最大时长
-//    Timer timer = new Timer();
-//    TimerTask timerTask = new TimerTask() {
-//      @Override
-//      public void run() {
-//        isCancelled = true;
-//        timer.cancel();
-//      }
-//    };
-//    timer.schedule(timerTask, 200);
 
     while (!isCancelled) {
       Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
-
-//      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
-//      Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
-//      System.out.println("unscheduledMap:");
-//      Float unscheduledMapSize = 0f;
-//      for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
-//        unscheduledMapSize += entry.getValue().getDataSize();
-//        System.out.println(entry.getKey() + ": " + entry.getValue().getNumber());
-//      }
-//      System.out.println("unscheduledMapSize: " + unscheduledMapSize);
-
+      // 上一个放到lane中的文库组的编号
       lastNumber = Utils.traversalMemory(libraryGroupList, laneList, unscheduledMap, lastNumber);
-      // 找到最新的待排单的文库组，如果是非加急的，就看看已经排好的是否符合要求，
-      // 如果符合要求，就可以快速结束排单了
-//      if(lastNumber!=0 && lastNumber!=libraryGroupList.size()) {
-//        LibraryGroup lg = libraryGroupList.get(lastNumber + 1);
-//        if (!lg.getUrgent()) {
-//          sr.setLaneList(laneList);
-//          for (LibraryGroup tmp : libraryGroupList) {
-//            if (tmp.getNumber() > lastNumber) {
-//              Utils.addLibraryGroupToUnscheduledMap(tmp, unscheduledMap);
-//            }
-//          }
-//          sr.setUnscheduledLibraryGroupMap(unscheduledMap);
-//          Utils.setScheduledResultInfo(sr);
-//          if (!sr.getSuccess()) continue;
-//          System.out.println(itList + "======== success--unscheduled ======");
-//          break;
-//        }
-//      }
       // 找到在libraryGroupList中，但不在unscheduledMap中的最大的number
       int largestNumber = Utils.getLargestNumber(libraryGroupList, unscheduledMap);
       // 全部文库组都排到lane中了
@@ -111,7 +73,6 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);
         Utils.setScheduledResultInfo(sr);
         if(!sr.getSuccess()) continue;
-//        countDownLatch.countDown();
         System.out.println(itList + "======== success ======");
         break;
       }
@@ -126,25 +87,5 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
   }
   public void cancel() {
     isCancelled = true;
-  }
-
-  public boolean isCancelled() {
-    return isCancelled;
-  }
-
-  public void setCancelled(boolean cancelled) {
-    isCancelled = cancelled;
-  }
-
-  public Map<String, LibraryGroup> getLibraryGroupMap() {
-    return libraryGroupMap;
-  }
-
-  public List<Lane> getLaneList() {
-    return laneList;
-  }
-
-  public CountDownLatch getCountDownLatch() {
-    return countDownLatch;
   }
 }

@@ -19,7 +19,7 @@ public class TaskRunner {
   private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
   /**
-   * 使用多线程，全遍历的方式获取排单列表
+   * 使用多线程，回溯的方式获取排单列表
    * @param libraryGroupMap 待排单文库组
    * @param laneList lane列表
    * @param expectedCount 找到多少种可能，就停止排单
