@@ -723,28 +723,6 @@ public class Utils {
     }
   }
   /**
-   * 将文库组列表放到未排单文库map中
-   * @param libraryGroupList 未排单文库组列表
-   * @param unscheduledMap 未排单map
-   */
-  public static void addLibraryGroupListToUnscheduledMap(List<LibraryGroup> libraryGroupList, Map<String, LibraryGroup> unscheduledMap) {
-    for(LibraryGroup lg: libraryGroupList) {
-      if(!unscheduledMap.keySet().contains(lg.getCode())) {
-        unscheduledMap.put(lg.getCode(), lg);
-      } else {
-        LibraryGroup libraryGroup = unscheduledMap.get(lg.getCode());
-        List<Library> slList = libraryGroup.getLibraryList();
-        slList.addAll(lg.getLibraryList());
-        libraryGroup.setLibraryList(slList);
-      }
-    }
-  }
-  public static void addLibraryGroupToUnscheduledMap(LibraryGroup libraryGroup, Map<String, LibraryGroup> unscheduledMap) {
-    List<LibraryGroup> list = new ArrayList<>();
-    list.add(libraryGroup);
-    addLibraryGroupListToUnscheduledMap(list, unscheduledMap);
-  }
-  /**
    * 计算两个字符串列表的最小汉明距离
    * @param list1 字符串列表1
    * @param list2 字符串列表2
@@ -805,20 +783,24 @@ public class Utils {
   }
 
   /**
-   * 获取lanelist中的文库组列表中，最大的序号的文库组
+   * 获取lanelist和unscheduledMap中的文库组列表中，最大的序号的文库组
    * 返回值为0时，说明已经全部试过了，都不可以
    * @param laneList lanelist参数
    * @return 返回对应的序号
    */
-  public static Integer getLastNumber(List<Lane> laneList) {
+  public static Integer getLastNumber(List<Lane> laneList, Map<String, LibraryGroup> unscheduledMap) {
     int number = 0;
     List<LibraryGroup> list = new ArrayList<>();
+    // list中加入所有lane中的文库组
     for(Lane lane:laneList) {
       if(lane.getLibraryGroupList().size() == 0) continue;
       LibraryGroup lg = lane.getLibraryGroupList().get(lane.getLibraryGroupList().size() - 1);
       list.add(lg);
     }
+    // list中加入所有unscheduledMap中的文库组
+    list.addAll(unscheduledMap.values());
     if(list.size() == 0) return 0;
+    // list中的文库组按序号排序，获取最大的那个文库组的编号
     list = list.stream().sorted().collect(Collectors.toList());
     number = list.get(list.size() - 1).getNumber();
     return number;
@@ -1175,7 +1157,10 @@ public class Utils {
         }
         System.out.println("lane data size: "+size +"--library group("+lane.getLibraryGroupList().size() + "): "+sbLane.toString());
       });
-      sb.append("\tunscheduled: ").append(result.getUnscheduledDataSize());
+      sb.append("\tunscheduled: ").append(result.getUnscheduledDataSize()).append("(").append(result.getUnscheduledLibraryGroupMap().size()).append("): ");
+      for(LibraryGroup libraryGroup:result.getUnscheduledLibraryGroupMap().values()) {
+        sb.append(libraryGroup.getNumber()).append(",");
+      }
       sb.append("\t").append(result.getNotes());
       System.out.println(sb.toString());
       System.out.println("*******************************************************************");
@@ -1250,23 +1235,25 @@ public class Utils {
 
   /**
    * 回溯的方式找出合适的排单结果，避免使用递归
+   * 尝试将文库组列表中的文库组放到lane或unscheduledMap，并返回上一个放入的文库组的编号
    * @param libraryGroupList 待排单的文库组列表
    * @param laneList lane列表
    * @param unscheduledMap 未排单map
    * @param lastNumber 上一个排入lane中的文库组序号
-   * @return 返回上一个排入lane中的文库组序号
+   * @return 返回上一个排入lane或unscheduledMap中的文库组序号
    */
   public static int traversalMemory(List<LibraryGroup> libraryGroupList, List<Lane> laneList,Map<String, LibraryGroup> unscheduledMap, int lastNumber) {
     int number = lastNumber;
-    // 找到在libraryGroupList中，但不在unscheduledMap中的最大的number
-    int largestNumber = getLargestNumber(libraryGroupList, unscheduledMap);
+    // 找到在libraryGroupList中的最大的number，就是排单信息对象中的文库组数量
+    int largestNumber = CommonComponent.SchedulingInfo.getInstance().getLibraryGroupSize();
     // 碱基不平衡的情况下，即使全部排完了，还是需要再排，将排进去的移出来换lane，再排
     if(number == largestNumber) {
-      number = getBacktraceNumber(laneList, number);
+      number = getBacktraceNumber(laneList, unscheduledMap, number);
     }
+    // 遍历文库组列表，尝试往lane中添加
+    // 从上次排入的文库组的下一个文库组开始，注意：文库组序号从1开始，文库组列表下标从0开始
     for(int i=number;i<libraryGroupList.size();i++) {
       LibraryGroup lg = libraryGroupList.get(i);
-      if(unscheduledMap.containsKey(lg.getCode())) continue;
       boolean added = false;
       for (Lane lane : laneList) {
         // 判断一个文库组是否可以放到某个lane中
@@ -1278,8 +1265,15 @@ public class Utils {
         }
       }
       if (added) continue;
-      // 如果文库组无法加入到lane中，说明之前的排单是有问题的，要调整
-      number = getBacktraceNumber(laneList, number);
+      // 如果无法加入到lane中，就尝试加入到unscheduledMap中
+      if(canAddLibraryGroupToUnscheduledMap(lg, unscheduledMap, laneList)) {
+        addLibraryGroupToUnscheduledMap(lg, unscheduledMap);
+        added = true;
+        number = lg.getNumber();
+      }
+      if (added) continue;
+      // 如果文库组无法加入到lane或unscheduledMap中，说明之前的排单是有问题的，要调整
+      number = getBacktraceNumber(laneList, unscheduledMap, number);
 //      System.out.println("***************************************************** 移位完成后：");
 //      laneList.forEach(lane-> {
 //        lane.getLibraryGroupList().forEach(libraryGroup1 -> {
@@ -1309,59 +1303,27 @@ public class Utils {
     return largestNumber;
   }
   /**
-   * 全遍历方式找出合适的排单结果
-   * @param libraryGroupList 待排单的文库组列表
-   * @param laneList lane列表
-   * @param lastNumber 上一个排入lane中的文库组序号
-   * @return 返回是否成功
-   */
-  public static Boolean traversal(List<LibraryGroup> libraryGroupList, List<Lane> laneList, int lastNumber) {
-    // 最后一个加入lane的libraryGroup的序号
-    int number = lastNumber;
-    // 全部排完了，可以从碱基平衡的角度考虑了
-    if(libraryGroupList.get(libraryGroupList.size()-1).getNumber() == lastNumber) {
-      // 考虑碱基平衡 todo
-      // 考虑数据量 todo
-//      for(int i=0;i< laneList.size();i++) {
-//        Lane lane = laneList.get(i);
-//        System.out.println("************************ success!!!! *****************************" + lane.getDataSize());
-//        if(lane.getDataSize() > lane.getDataSizeCeiling() || lane.getDataSize() < lane.getDataSizeFloor()) {
-//          number = getBacktraceNumber(laneList, lastNumber);
-//          return traversal(libraryGroupList, laneList, number);
-//        }
-//      }
-      return true;
-    }
-    // 最后一个排进去的是第一个，说明已经调整到最后都不可行了
-    if(lastNumber == 1) {
-      return false;
-    }
-    for(int i=lastNumber;i<libraryGroupList.size();i++) {
-      boolean added = false;
-      LibraryGroup libraryGroup = libraryGroupList.get(i);
-      for (Lane lane : laneList) {
-        if (Utils.canAddLibraryGroupToLane(lane, libraryGroup)) {
-          Utils.addLibraryGroupToLane(lane, libraryGroup);
-          number = libraryGroupList.get(i).getNumber();
-          added = true;
-          break;
-        }
-      }
-      // 如果文库组无法加入到lane中，说明之前的排单是有问题的，要调整
-      if(!added) {
-        number = getBacktraceNumber(laneList, number);
-        break;
-      }
-    }
-    return traversal(libraryGroupList, laneList, number);
-  }
-  /**
    * 调整lane列表，并获取回溯编号
    * @param laneList lane列表
    * @param number 待移位的文库组number
    * @return 返回需要重新排的第一个文库组的number
    */
-  public static Integer getBacktraceNumber(List<Lane> laneList, int number) {
+  public static Integer getBacktraceNumber(List<Lane> laneList, Map<String, LibraryGroup> unscheduledMap, int number) {
+//    System.out.println("number: "+ number);
+//    StringBuilder sb = new StringBuilder();
+//    for(Lane lane: laneList) {
+//      sb.append("lane: ");
+//      for(LibraryGroup libraryGroup:lane.getLibraryGroupList()) {
+//        sb.append(libraryGroup.getNumber()).append(",");
+//      }
+//      System.out.println(sb.toString());
+//      sb.setLength(0);
+//    }
+//    sb.append("unscheduled: ");
+//    for(LibraryGroup libraryGroup:unscheduledMap.values()) {
+//      sb.append(libraryGroup.getNumber()).append(",");
+//    }
+//    System.out.println(sb.toString());
     // 如果lane列表是空的，还需要调整，说明全部可能已经试过了
     if(number == 0) return number;
     // 待移位的libraryGroup
@@ -1381,47 +1343,41 @@ public class Utils {
       }
       if(laneIndex >= 0) break;
     }
-//    System.out.println("***************************************************** reset，lastNumber:" + number);
-//    laneList.forEach(lane-> {
-//      lane.getLibraryGroupList().forEach(libraryGroup1 -> {
-//        System.out.print(libraryGroup1.getNumber()+";");
-//      });
-//      System.out.println("");
-//    });
-//    System.out.println("待移位文库组，lane: " + laneIndex + "--编号" + lg.getNumber());
-//    System.out.println("*****************************************************");
-    // 将待移位的libraryGroup移出之前所在的lane
-    removeLibraryGroupFromLane(laneList.get(laneIndex), lg);
-    // 如果待移位的libraryGroup不在最后一个lane，那就放到下一个lane中试试
-    if(laneIndex < laneList.size() -1) {
-      boolean flag = false;
-      for(int i =laneIndex + 1;i<laneList.size();i++) {
-        flag = canAddLibraryGroupToLane(laneList.get(i), lg);
-        if(flag) {
-          addLibraryGroupToLane(laneList.get(i), lg);
-          return lg.getNumber();
+    // 如果待移位的libraryGroup在lane列表中
+    if(laneIndex >= 0) {
+      // 将待移位的libraryGroup移出之前所在的lane
+      removeLibraryGroupFromLane(laneList.get(laneIndex), lg);
+      // 如果待移位的libraryGroup不在最后一个lane，那就放到下一个lane中试试
+      if(laneIndex < laneList.size() -1) {
+        for(int i =laneIndex + 1;i<laneList.size();i++) {
+          if(canAddLibraryGroupToLane(laneList.get(i), lg)) {
+            addLibraryGroupToLane(laneList.get(i), lg);
+            return lg.getNumber();
+          }
         }
       }
+      // 如果所有的lane都放不进去，就只能尝试放到unscheduledMap中
+      if(canAddLibraryGroupToUnscheduledMap(lg, unscheduledMap, laneList)) {
+        addLibraryGroupToUnscheduledMap(lg, unscheduledMap);
+        return lg.getNumber();
+      } else {
+        // 如果lane和unscheduledMap都放不进去，就只能调整上一个放进去的文库组
+        number = Utils.getLastNumber(laneList, unscheduledMap);
+        return getBacktraceNumber(laneList, unscheduledMap, number);
+      }
     }
-    // 如果所有的lane都放不进去，就只能调整上一个libraryGroup了
-    // 如果本身这个libraryGroup就是在最后一个lane，就只能调整上一个libraryGroup了
-    number = Utils.getLastNumber(laneList);
-    return getBacktraceNumber(laneList, number);
-  }
-
-  /**
-   * 通过编码list获取编号list
-   * @param map 文库组map
-   * @param codeList 编码list
-   * @return 编号list
-   */
-  public static List<Integer> getNumberList(Map<String, LibraryGroup> map, List<String> codeList) {
-    List<Integer> list = new ArrayList<>();
-    for(String code: codeList) {
-      Integer number = map.get(code).getNumber();
-      list.add(number);
+    // 待移位的libraryGroup不在lane中，必然在unscheduledMap中
+    for(LibraryGroup libraryGroup:unscheduledMap.values()) {
+      if(libraryGroup.getNumber() == number) {
+        lg = libraryGroup;
+        break;
+      }
     }
-    return list;
+    // 将待移位的libraryGroup移出unscheduledMap
+    removeLibraryGroupFromUnscheduledMap(lg, unscheduledMap);
+    // 调整上一个libraryGroup了
+    number = Utils.getLastNumber(laneList, unscheduledMap);
+    return getBacktraceNumber(laneList, unscheduledMap, number);
   }
 
   /**
@@ -1446,6 +1402,24 @@ public class Utils {
     if(datasize < si.getDataSize() - laneDataSizeFloor) {
       flag = true;
     }
+//    flag = 1 > 2;
     return flag;
+  }
+
+  /**
+   * 将文库组加入到未排单map
+   * @param libraryGroup 文库组
+   * @param unscheduledMap 未排单map
+   */
+  public static void addLibraryGroupToUnscheduledMap(LibraryGroup libraryGroup, Map<String, LibraryGroup> unscheduledMap) {
+    unscheduledMap.put(libraryGroup.getCode(), libraryGroup);
+  }
+  /**
+   * 将文库组移出未排单map
+   * @param libraryGroup 文库组
+   * @param unscheduledMap 未排单map
+   */
+  public static void removeLibraryGroupFromUnscheduledMap(LibraryGroup libraryGroup, Map<String, LibraryGroup> unscheduledMap) {
+    unscheduledMap.remove(libraryGroup.getCode());
   }
 }

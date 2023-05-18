@@ -42,7 +42,7 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     } catch (Exception e) {
 //      System.out.println("task interrupted cause thread been interrupted");
     } finally {
-      executor.shutdownNow();
+      executor.shutdown();
     }
     return sr;
   }
@@ -60,14 +60,14 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
     // 最后一个放到lane中的文库组的编号，初始是0，说明还没有放
     int lastNumber = 0;
+    Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
 
     while (!isCancelled) {
-      Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
-      // 上一个放到lane中的文库组的编号
+      // 尝试将文库组列表中的文库组放到lane或unscheduledMap，并返回上一个放入的文库组的编号
       lastNumber = Utils.traversalMemory(libraryGroupList, laneList, unscheduledMap, lastNumber);
-      // 找到在libraryGroupList中，但不在unscheduledMap中的最大的number
-      int largestNumber = Utils.getLargestNumber(libraryGroupList, unscheduledMap);
-      // 全部文库组都排到lane中了
+      // 找到在libraryGroupList中的最大的number，就是排单信息对象中的文库组数量
+      int largestNumber = CommonComponent.SchedulingInfo.getInstance().getLibraryGroupSize();
+      // 全部文库组都排到lane或unscheduledMap中了
       if(lastNumber==largestNumber) {
         sr.setLaneList(laneList);
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);

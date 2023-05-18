@@ -29,7 +29,11 @@ public class TaskRunner {
     List<CommonComponent.ScheduledResult> list = CommonComponent.SchedulingInfo.getInstance().getResultList();
     // 创建线程池
     ExecutorService executor = Executors.newFixedThreadPool(MAX_THREADS);
-    List<CommonComponent.IndexType> indexTypeList = null;
+    List<CommonComponent.IndexType> indexTypeList = new ArrayList<>();
+//    indexTypeList.add(CommonComponent.IndexType.P8);
+//    indexTypeList.add(CommonComponent.IndexType.P10);
+//    indexTypeList.add(CommonComponent.IndexType.S10);
+//    laneList = Utils.initLaneList(laneList.size(), indexTypeList);
     // 初始化countdownlatch，count是期望找到的可能性个数
     CountDownLatch countDownLatch = new CountDownLatch(expectedCount);
     // 根据indextype生成任务列表
@@ -43,6 +47,7 @@ public class TaskRunner {
       laneList = Utils.initLaneList(laneList.size(), indexTypeList);
       tasks.add(new Task(libraryGroupMap, laneList, countDownLatch));
     }
+
     // 将任务列表提交给线程池，线程池开始调度运行任务
     List<Future<?>> futures = new ArrayList<Future<?>>();
     for(Task task: tasks) {
@@ -79,7 +84,7 @@ public class TaskRunner {
       }
       // shutdown thread pool
       System.out.println("shutdown");
-      executor.shutdownNow();
+      executor.shutdown();
     }
     return list;
   }
