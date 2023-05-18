@@ -21,21 +21,10 @@ public class ExcelDataOutput {
   private String splitRule;
   @ExcelProperty("备注")
   private String notes;
-
-  @Override
-  public String toString() {
-    return "ExcelData{" +
-      "productName='" + productName + '\'' +
-      ", elutionLibraryName='" + elutionLibraryName + '\'' +
-      ", geneplusCode='" + geneplusCode + '\'' +
-      ", subLibraryName='" + subLibraryName + '\'' +
-      ", f='" + f + '\'' +
-      ", r='" + r + '\'' +
-      ", dataSize=" + dataSize +
-      ", splitRule='" + splitRule + '\'' +
-      ", notes='" + notes + '\'' +
-      '}';
-  }
+  @ExcelProperty("上机lane标识")
+  private Integer laneNumber;
+  @ExcelProperty("上机策略")
+  private String indexType;
 
   public String getProductName() {
     return productName;
@@ -107,5 +96,21 @@ public class ExcelDataOutput {
 
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  public Integer getLaneNumber() {
+    return laneNumber;
+  }
+
+  public void setLaneNumber(Integer laneNumber) {
+    this.laneNumber = laneNumber;
+  }
+
+  public String getIndexType() {
+    return indexType;
+  }
+
+  public void setIndexType(String indexType) {
+    this.indexType = indexType;
   }
 }

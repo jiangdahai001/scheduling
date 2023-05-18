@@ -298,29 +298,27 @@ public class Utils {
 
   /**
    * 获取排单数据列表
-   * @param lane
-   * @return
+   * @param lane lane
+   * @param laneNumber lane的序号
+   * @return 返回列表数据
    */
-  public static List<ExcelDataOutput> getScheduledExcelDataList(Lane lane) {
+  public static List<ExcelDataOutput> getScheduledExcelDataList(Lane lane, int laneNumber) {
     List<ExcelDataOutput> list = new ArrayList<>();
     List<LibraryGroup> lgList = lane.getLibraryGroupList();
-    ExcelDataOutput mark = new ExcelDataOutput();
-    mark.setProductName("lane info[dataSize:" + lane.getDataSize() + "--indexType:" +lane.getIndexType()+"--libraryGroup count:" + lane.getLibraryGroupList().size()+"]");
-    list.add(mark);
     for (LibraryGroup lg : lgList) {
-      String urgent = lg.getUrgent() ? "加急" : "非加急";
-      String unbalance = lg.getUnbalance() ? "不平衡" : "非不平衡";
-      list.addAll(getScheduledExcelDataList(lg));
+      list.addAll(getScheduledExcelDataList(lg, laneNumber, lane.getIndexType().toString()));
     }
     return list;
   }
 
   /**
    * 按文库组获取排单数据列表
-   * @param lg
-   * @return
+   * @param lg 文库组
+   * @param laneNumber lane编号
+   * @param indexType index类型
+   * @return 返回数据列表
    */
-  public static List<ExcelDataOutput> getScheduledExcelDataList(LibraryGroup lg) {
+  public static List<ExcelDataOutput> getScheduledExcelDataList(LibraryGroup lg, Integer laneNumber, String indexType) {
     List<ExcelDataOutput> list = new ArrayList<>();
     List<Library> lList = lg.getLibraryList();
     for (Library l : lList) {
@@ -334,6 +332,10 @@ public class Utils {
       edo.setDataSize(l.getDataSize());
       edo.setSplitRule(l.getSplitRule());
       edo.setNotes(l.getNotes());
+      if(laneNumber != null) {
+        edo.setLaneNumber(laneNumber);
+        edo.setIndexType(indexType);
+      }
       list.add(edo);
     }
     return list;
@@ -345,7 +347,7 @@ public class Utils {
    */
   public static String getCurrentTime() {
     Calendar calendar = Calendar.getInstance();
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-hhmmss");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
     return dateFormat.format(calendar.getTime());
   }
 
@@ -1109,8 +1111,10 @@ public class Utils {
     ExcelWriter excelWriter = EasyExcel.write(fileName, ExcelDataOutput.class).build();
     // 排单结果
     List<ExcelDataOutput> dataList = new ArrayList<>();
-    for(Lane lane:laneList) {
-      dataList.addAll(getScheduledExcelDataList(lane));
+    for(int i=0;i<laneList.size();i++) {
+      Lane lane = laneList.get(i);
+      int laneNumber = i + 1;
+      dataList.addAll(getScheduledExcelDataList(lane, laneNumber));
     }
     WriteSheet sheet1 = EasyExcel.writerSheet("排单结果").build();
     // 碱基比率
@@ -1125,7 +1129,7 @@ public class Utils {
     // 未排单结果
     List<ExcelDataOutput> unscheduledDataList = new ArrayList<>();
     unscheduledMap.forEach((key, value) -> {
-      unscheduledDataList.addAll(Utils.getScheduledExcelDataList(value));
+      unscheduledDataList.addAll(Utils.getScheduledExcelDataList(value, null, null));
     });
     WriteSheet sheet3 = EasyExcel.writerSheet("未排单文库").build();
     // 写入excel
