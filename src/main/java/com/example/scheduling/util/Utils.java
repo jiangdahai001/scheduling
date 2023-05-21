@@ -500,10 +500,10 @@ public class Utils {
     List<LibraryGroup> laneLibraryGroupList = lane.getLibraryGroupList();
     for(LibraryGroup lg:laneLibraryGroupList) {
       // 查看同lane上机是否符合条件
-      if(!lg.getSameLaneLimit().equals("") && !libraryGroup.getSameLaneLimit().equals("")) {
-        if(!lg.getSameLaneLimit().equals(libraryGroup.getSameLaneLimit())) {
-          return false;
-        }
+      if(!lg.getSameLaneLimit().equals("") && !libraryGroup.getSameLaneLimit().equals("") &&
+        !lg.getSameLaneLimit().equals("同lane上机") && !libraryGroup.getSameLaneLimit().equals("同lane上机") &&
+        !lg.getSameLaneLimit().equals(libraryGroup.getSameLaneLimit())) {
+        return false;
       }
       // 查看汉明距离是否符合条件
       if(lg.getHammingDistantLimitCodeMap().get(indexType).contains(libraryGroup.getCode())) {
