@@ -330,6 +330,7 @@ public class Utils {
       edo.setF(l.getF());
       edo.setR(l.getR());
       edo.setDataSize(l.getDataSize());
+      edo.setPoolingCode(l.getPoolingCode());
       edo.setSplitRule(l.getSplitRule());
       edo.setNotes(l.getNotes());
       if(laneNumber != null) {
@@ -1022,17 +1023,18 @@ public class Utils {
         si.setDataSize(si.getDataSize() + itemSize);
         // 按行处理读取的数据
         LibraryGroup lg = null;
+        String poolingCode = excelData.getPoolingCode()==null ? "":excelData.getPoolingCode();
         // 判断是否在待排单的文库组中，不存在，新增；存在，加入新文库
         if(libraryGroupMap.containsKey(excelData.getGeneplusCode())) {
           lg = libraryGroupMap.get(excelData.getGeneplusCode());
         } else {
           String productName = excelData.getProductName();
           String geneplusCode = excelData.getGeneplusCode();
-          String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
-          List<String> noteList = Arrays.asList(notes.replaceAll("，", ",").split(","));
           // 判断是否需要新建一个文库组
           boolean needNew = true;
-          // 获取同lane上机限制：同lane上机/同lane上机1/同lane上机2。。。
+
+          String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
+          List<String> noteList = Arrays.asList(notes.replaceAll("，", ",").split(","));
           String sameLaneLimit = "";
           for(String n: noteList) {
             if(n.matches("同lane上机\\d*?")) {
@@ -1042,6 +1044,13 @@ public class Utils {
           }
           // 如果是同lane上机，并且之前已经有符合条件的同lane上机的文库组，那就直接使用之前的那个文库组
           for(LibraryGroup libraryGroup:libraryGroupMap.values()) {
+            // 判断是否是同一个pooling编号，非空的同一个pooling编号放到一个文库组
+            String lgPoolingCode = libraryGroup.getPoolingCode();
+            if(!lgPoolingCode.equals("") && !poolingCode.equals("") && lgPoolingCode.equals(poolingCode)) {
+              needNew = false;
+              break;
+            }
+            // 获取同lane上机限制：同lane上机/同lane上机1/同lane上机2。。。
             if(libraryGroup.getProductName().equals(productName)
               && libraryGroup.getCode().equals(geneplusCode)
               && sameLaneLimit.equals(libraryGroup.getSameLaneLimit())) {
@@ -1066,7 +1075,7 @@ public class Utils {
             lg.setHammingDistantF(noteList.contains("F"));
             lg.setSameLaneLimit(sameLaneLimit);
             lg.setMozhuo(noteList.contains("墨卓"));
-
+            lg.setPoolingCode(poolingCode);
             lg.setSingleEnd(excelData.getR()==null || excelData.getR().equals(""));
             lg.setDataSize(0f);
             lg.setLibraryList(new ArrayList<>());
@@ -1082,6 +1091,7 @@ public class Utils {
         library.setIndexNum(excelData.getIndexNum());
         library.setF(excelData.getF());
         library.setR(Optional.ofNullable(excelData.getR()).orElse(""));
+        library.setPoolingCode(poolingCode);
         library.setSplitRule(Optional.ofNullable(excelData.getSplitRule()).orElse(""));
         library.setNotes(excelData.getNotes());
         lg.getLibraryList().add(library);

@@ -21,6 +21,8 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
   private String sameLaneLimit;
   // 是否墨卓样本
   private Boolean isMozhuo;
+  // pooling编号
+  private String poolingCode;
 
   // 总数据量
   private Float dataSize;
@@ -115,6 +117,14 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
 
   public void setMozhuo(Boolean mozhuo) {
     isMozhuo = mozhuo;
+  }
+
+  public String getPoolingCode() {
+    return poolingCode;
+  }
+
+  public void setPoolingCode(String poolingCode) {
+    this.poolingCode = poolingCode;
   }
 
   public void setUrgent(Boolean urgent) {

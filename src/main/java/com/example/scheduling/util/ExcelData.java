@@ -19,6 +19,8 @@ public class ExcelData {
   private String r;
   @ExcelProperty("放大的数据量")
   private Float dataSize;
+  @ExcelProperty("pooling编号")
+  private String poolingCode;
   @ExcelProperty("拆分规则")
   private String splitRule;
   @ExcelProperty("备注")
@@ -45,6 +47,14 @@ public class ExcelData {
 
   public void setIndexNum(String indexNum) {
     this.indexNum = indexNum;
+  }
+
+  public String getPoolingCode() {
+    return poolingCode;
+  }
+
+  public void setPoolingCode(String poolingCode) {
+    this.poolingCode = poolingCode;
   }
 
   public String getProductName() {

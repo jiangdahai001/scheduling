@@ -21,6 +21,8 @@ public class Library implements Cloneable{
   private String R;
   // 实际数据量
   private Float dataSize;
+  // pooling编号
+  private String poolingCode;
   // 拆分规则
   private String splitRule;
   // 备注
@@ -73,6 +75,14 @@ public class Library implements Cloneable{
 
   public void setIndexSeqMap(Map<CommonComponent.IndexType, String> indexSeqMap) {
     this.indexSeqMap = indexSeqMap;
+  }
+
+  public String getPoolingCode() {
+    return poolingCode;
+  }
+
+  public void setPoolingCode(String poolingCode) {
+    this.poolingCode = poolingCode;
   }
 
   public String getLibraryName() {
