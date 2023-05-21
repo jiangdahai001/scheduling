@@ -18,6 +18,10 @@ public class Lane {
   private Float unbalanceDataSize;
   // lane的不平衡数据量上限
   private Float unbalanceDataSizeCeiling;
+  // lane中墨卓文库的数据量
+  private Float mozhuoDataSize;
+  // lane中墨卓文库的数据量上限
+  private Float mozhuoDataSizeCeiling;
   // lane中单端文库组数据量
   private Float singleEndDataSize;
   // index为双端时，lane中单端的比率上限
@@ -30,6 +34,8 @@ public class Lane {
     this.dataSize = 0f;
     this.dataSizeCeiling = 1400f;
     this.dataSizeFloor = 1300f;
+    this.mozhuoDataSize = 0f;
+    this.mozhuoDataSizeCeiling = 150f;
     this.unbalanceDataSize = 0f;
     this.unbalanceDataSizeCeiling = 300f;
     this.singleEndDataSize = 0f;
@@ -59,6 +65,22 @@ public class Lane {
 
   public void setUnbalanceDataSizeCeiling(Float unbalanceDataSizeCeiling) {
     this.unbalanceDataSizeCeiling = unbalanceDataSizeCeiling;
+  }
+
+  public Float getMozhuoDataSize() {
+    return mozhuoDataSize;
+  }
+
+  public void setMozhuoDataSize(Float mozhuoDataSize) {
+    this.mozhuoDataSize = mozhuoDataSize;
+  }
+
+  public Float getMozhuoDataSizeCeiling() {
+    return mozhuoDataSizeCeiling;
+  }
+
+  public void setMozhuoDataSizeCeiling(Float mozhuoDataSizeCeiling) {
+    this.mozhuoDataSizeCeiling = mozhuoDataSizeCeiling;
   }
 
   public CommonComponent.IndexType getIndexType() {

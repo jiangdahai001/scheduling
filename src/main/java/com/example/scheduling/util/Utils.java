@@ -476,6 +476,12 @@ public class Utils {
     if(lane.getUnbalanceDataSize() + lgUnbalanceDataSize > lane.getUnbalanceDataSizeCeiling()) {
       return false;
     }
+    // 墨卓文库判断，墨卓文库组不能同其他不平衡文库组同lane，墨卓文库组在一个lane中有上限
+    if(libraryGroup.getMozhuo()) {
+      if(lane.getUnbalanceDataSize() > 0) return false;
+      if(lgDataSize + lane.getMozhuoDataSize() > lane.getMozhuoDataSizeCeiling()) return false;
+    }
+    // 双端测序时，单端文库组的限制
     CommonComponent.IndexType indexType = lane.getIndexType();
     if(CommonComponent.IndexType.isPairEnd(indexType)) {
       float laneSingleEndDataSizeTmp = lgSingleEndDataSize + lane.getSingleEndDataSize();
