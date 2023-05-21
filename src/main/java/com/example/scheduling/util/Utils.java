@@ -462,35 +462,39 @@ public class Utils {
    */
   public static boolean canAddLibraryGroupToLane(Lane lane, LibraryGroup libraryGroup) {
     Float lgDataSize = libraryGroup.getDataSize();
-    Float lgUnbalanceDataSize = 0f;
-    Float lgSingleEndDataSize = 0f;
+    CommonComponent.IndexType indexType = lane.getIndexType();
     // 判断数据量是否超过限制
-    if(libraryGroup.getUnbalance()) {
-      lgUnbalanceDataSize = libraryGroup.getDataSize();
-    }
-    if(libraryGroup.getSingleEnd()) {
-      lgSingleEndDataSize = libraryGroup.getDataSize();
-    }
     if(lane.getDataSize() + lgDataSize > lane.getDataSizeCeiling()) {
       return false;
     }
-    if(lane.getUnbalanceDataSize() + lgUnbalanceDataSize > lane.getUnbalanceDataSizeCeiling()) {
-      return false;
-    }
-    // 墨卓文库判断，墨卓文库组不能同其他不平衡文库组同lane，墨卓文库组在一个lane中有上限
-    if(libraryGroup.getMozhuo()) {
-      if(lane.getUnbalanceDataSize() > 0) return false;
-      if(lgDataSize + lane.getMozhuoDataSize() > lane.getMozhuoDataSizeCeiling()) return false;
-    }
-    // 双端测序时，单端文库组的限制
-    CommonComponent.IndexType indexType = lane.getIndexType();
-    if(CommonComponent.IndexType.isPairEnd(indexType)) {
-      float laneSingleEndDataSizeTmp = lgSingleEndDataSize + lane.getSingleEndDataSize();
-      float laneDataSizeTmp = lgSingleEndDataSize + lane.getDataSize();
+    // 不平衡文库限制
+    if(libraryGroup.getUnbalance()) {
+      if(libraryGroup.getUnbalanceMozhuo()) {
+        if(lgDataSize + lane.getUnbalanceMozhuoDataSize() > lane.getUnbalanceMozhuoDataSizeCeiling()) return false;
+      } else {
+        // 如果lane中墨卓已有大于等于100G的数据，则不能排其他不平衡文库
+        if(lane.getUnbalanceMozhuoDataSize() >= 100f) return false;
+      }
+      float laneUnbalanceDataSizeTmp = lgDataSize + lane.getUnbalanceDataSize();
+      float laneDataSizeTmp = lgDataSize + lane.getDataSize();
       if(laneDataSizeTmp < lane.getDataSizeFloor()) {
         laneDataSizeTmp = lane.getDataSizeFloor();
       }
-      if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
+      if(laneUnbalanceDataSizeTmp / laneDataSizeTmp > lane.getUnbalanceDataSizeRatioLimit()) {
+        // ToDO
+        // 这里目前只是判断当前的数据需要满足情况，有一种情况未考虑，就是当前的情况不满足，但是后续在lane中新增文库组后，条件又满足了
+//        System.out.println("**&&*&*&*&&(*(&*&*&*");
+        return false;
+      }
+    }
+    // 双端测序时，单端文库组的限制
+    if(libraryGroup.getSingleEnd() && CommonComponent.IndexType.isPairEnd(indexType)) {
+      float laneSingleEndDataSizeTmp = lgDataSize + lane.getSingleEndDataSize();
+      float laneDataSizeTmp = lgDataSize + lane.getDataSize();
+      if(laneDataSizeTmp < lane.getDataSizeFloor()) {
+        laneDataSizeTmp = lane.getDataSizeFloor();
+      }
+      if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndDataSizeRatioLimit()) {
         // ToDO
         // 这里目前只是判断当前的数据需要满足情况，有一种情况未考虑，就是当前的情况不满足，但是后续在lane中新增文库组后，条件又满足了
 //        System.out.println("**&&*&*&*&&(*(&*&*&*");
@@ -514,13 +518,25 @@ public class Utils {
   }
   /**
    * 将一个文库组加入到一个lane中
-   * @param lane
-   * @param libraryGroup
+   * @param lane 目标lane
+   * @param libraryGroup 目标文库组
    */
   public static void addLibraryGroupToLane(Lane lane, LibraryGroup libraryGroup) {
-    List<LibraryGroup> list = new ArrayList<>();
-    list.add(libraryGroup);
-    addLibraryGroupListToLane(lane, list);
+    lane.getLibraryGroupList().add(libraryGroup);
+    Float size = libraryGroup.getDataSize();
+    lane.setDataSize(lane.getDataSize() + size);
+    if(libraryGroup.getUnbalance()) {
+      lane.setUnbalanceDataSize(lane.getUnbalanceDataSize() + size);
+      if(libraryGroup.getUnbalanceMozhuo()) {
+        lane.setUnbalanceMozhuoDataSize((lane.getUnbalanceMozhuoDataSize() + size));
+      }
+    }
+    if(libraryGroup.getSingleEnd()) {
+      lane.setSingleEndDataSize(lane.getSingleEndDataSize() + size);
+    }
+//    List<LibraryGroup> list = new ArrayList<>();
+//    list.add(libraryGroup);
+//    addLibraryGroupListToLane(lane, list);
   }
   /**
    * 将一个文库组移出lane
@@ -1071,10 +1087,15 @@ public class Utils {
             } else {
               lg.setUrgent(false);
             }
-            lg.setUnbalance(noteList.contains("不平衡文库"));
             lg.setHammingDistantF(noteList.contains("F"));
             lg.setSameLaneLimit(sameLaneLimit);
-            lg.setMozhuo(noteList.contains("墨卓"));
+            if(noteList.contains("墨卓")) {
+              lg.setUnbalanceMozhuo(true);
+              lg.setUnbalance(true);
+            } else {
+              lg.setUnbalanceMozhuo(false);
+              lg.setUnbalance(noteList.contains("不平衡文库"));
+            }
             lg.setPoolingCode(poolingCode);
             lg.setSingleEnd(excelData.getR()==null || excelData.getR().equals(""));
             lg.setDataSize(0f);
@@ -1202,10 +1223,8 @@ public class Utils {
     List<Lane> laneList = new ArrayList<>();
     for(int i=0;i<size;i++) {
       Lane lane = new Lane();
-      lane.setDataSizeCeiling(1400f);
-      lane.setDataSizeFloor(1300f);
-//      lane.setDataSizeCeiling(1450f);
-//      lane.setDataSizeFloor(1350f);
+//      lane.setDataSizeCeiling(1400f);
+//      lane.setDataSizeFloor(1300f);
       laneList.add(lane);
     }
     if(indexTypeList != null) {

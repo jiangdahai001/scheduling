@@ -17,12 +17,14 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
   private volatile boolean isCancelled;
   private final Map<String, LibraryGroup> libraryGroupMap;
   private final List<Lane> laneList;
+  private final List<CommonComponent.IndexType> indexTypeList;
   private final CountDownLatch countDownLatch;
 
   public Task(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, CountDownLatch countDownLatch) {
     this.libraryGroupMap = libraryGroupMap;
     this.laneList = laneList;
     this.countDownLatch = countDownLatch;
+    this.indexTypeList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
   }
 
   /**
@@ -56,8 +58,6 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     CommonComponent.ScheduledResult sr = new CommonComponent.ScheduledResult();
     // 将map转换为list，并排序
     List<LibraryGroup> libraryGroupList = libraryGroupMap.values().stream().sorted().collect(Collectors.toList());
-    // 根据lane列表获取indextype列表
-    List<CommonComponent.IndexType> itList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
     // 最后一个放到lane中的文库组的编号，初始是0，说明还没有放
     int lastNumber = 0;
     Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
@@ -73,13 +73,13 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);
         Utils.setScheduledResultInfo(sr);
         if(!sr.getSuccess()) continue;
-        System.out.println(itList + "======== success ======");
+        System.out.println(indexTypeList + "======== success ======");
         break;
       }
       // 全部遍历了，无法排出来
       // lane中数据为空，说明全部都试了，无法排出来
       if(lastNumber == 0) {
-        System.out.println(itList + "======== failed ======");
+        System.out.println(indexTypeList + "======== failed ======");
         break;
       }
     }

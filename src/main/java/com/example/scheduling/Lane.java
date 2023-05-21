@@ -16,32 +16,64 @@ public class Lane {
   private Float dataSizeFloor;
   // lane的不平衡数据量
   private Float unbalanceDataSize;
-  // lane的不平衡数据量上限
-  private Float unbalanceDataSizeCeiling;
+  // lane的不平衡文库数据量比率上线
+  private Float unbalanceDataSizeRatioLimit;
   // lane中墨卓文库的数据量
-  private Float mozhuoDataSize;
+  private Float unbalanceMozhuoDataSize;
   // lane中墨卓文库的数据量上限
-  private Float mozhuoDataSizeCeiling;
+  private Float unbalanceMozhuoDataSizeCeiling;
   // lane中单端文库组数据量
   private Float singleEndDataSize;
   // index为双端时，lane中单端的比率上限
-  private Float singleEndRatioLimit;
+  private Float singleEndDataSizeRatioLimit;
   // lane中的文库组列表
   private List<LibraryGroup> libraryGroupList;
 
   public Lane(){
     this.indexType = CommonComponent.IndexType.getFirst();
     this.dataSize = 0f;
-    this.dataSizeCeiling = 1400f;
-    this.dataSizeFloor = 1300f;
-    this.mozhuoDataSize = 0f;
-    this.mozhuoDataSizeCeiling = 150f;
+    this.dataSizeCeiling = 1450f;
+    this.dataSizeFloor = 1350f;
     this.unbalanceDataSize = 0f;
-    this.unbalanceDataSizeCeiling = 300f;
+    this.unbalanceMozhuoDataSize = 0f;
+    this.unbalanceMozhuoDataSizeCeiling = 150f;
+    this.unbalanceDataSizeRatioLimit = 0.25f;
     this.singleEndDataSize = 0f;
-    this.singleEndRatioLimit = 0.5f;
+    this.singleEndDataSizeRatioLimit = 0.5f;
     this.libraryGroupList = new ArrayList<>();
   };
+
+  public Float getUnbalanceMozhuoDataSize() {
+    return unbalanceMozhuoDataSize;
+  }
+
+  public void setUnbalanceMozhuoDataSize(Float unbalanceMozhuoDataSize) {
+    this.unbalanceMozhuoDataSize = unbalanceMozhuoDataSize;
+  }
+
+  public Float getUnbalanceMozhuoDataSizeCeiling() {
+    return unbalanceMozhuoDataSizeCeiling;
+  }
+
+  public void setUnbalanceMozhuoDataSizeCeiling(Float unbalanceMozhuoDataSizeCeiling) {
+    this.unbalanceMozhuoDataSizeCeiling = unbalanceMozhuoDataSizeCeiling;
+  }
+
+  public Float getSingleEndDataSizeRatioLimit() {
+    return singleEndDataSizeRatioLimit;
+  }
+
+  public void setSingleEndDataSizeRatioLimit(Float singleEndDataSizeRatioLimit) {
+    this.singleEndDataSizeRatioLimit = singleEndDataSizeRatioLimit;
+  }
+
+  public Float getUnbalanceDataSizeRatioLimit() {
+    return unbalanceDataSizeRatioLimit;
+  }
+
+  public void setUnbalanceDataSizeRatioLimit(Float unbalanceDataSizeRatioLimit) {
+    this.unbalanceDataSizeRatioLimit = unbalanceDataSizeRatioLimit;
+  }
 
   public Float getSingleEndDataSize() {
     return singleEndDataSize;
@@ -49,38 +81,6 @@ public class Lane {
 
   public void setSingleEndDataSize(Float singleEndDataSize) {
     this.singleEndDataSize = singleEndDataSize;
-  }
-
-  public Float getSingleEndRatioLimit() {
-    return singleEndRatioLimit;
-  }
-
-  public void setSingleEndRatioLimit(Float singleEndRatioLimit) {
-    this.singleEndRatioLimit = singleEndRatioLimit;
-  }
-
-  public Float getUnbalanceDataSizeCeiling() {
-    return unbalanceDataSizeCeiling;
-  }
-
-  public void setUnbalanceDataSizeCeiling(Float unbalanceDataSizeCeiling) {
-    this.unbalanceDataSizeCeiling = unbalanceDataSizeCeiling;
-  }
-
-  public Float getMozhuoDataSize() {
-    return mozhuoDataSize;
-  }
-
-  public void setMozhuoDataSize(Float mozhuoDataSize) {
-    this.mozhuoDataSize = mozhuoDataSize;
-  }
-
-  public Float getMozhuoDataSizeCeiling() {
-    return mozhuoDataSizeCeiling;
-  }
-
-  public void setMozhuoDataSizeCeiling(Float mozhuoDataSizeCeiling) {
-    this.mozhuoDataSizeCeiling = mozhuoDataSizeCeiling;
   }
 
   public CommonComponent.IndexType getIndexType() {

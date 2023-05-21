@@ -20,7 +20,7 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
   // 同lane上机限制
   private String sameLaneLimit;
   // 是否墨卓样本
-  private Boolean isMozhuo;
+  private Boolean isUnbalanceMozhuo;
   // pooling编号
   private String poolingCode;
 
@@ -111,12 +111,12 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
     this.sameLaneLimit = sameLaneLimit;
   }
 
-  public Boolean getMozhuo() {
-    return isMozhuo;
+  public Boolean getUnbalanceMozhuo() {
+    return isUnbalanceMozhuo;
   }
 
-  public void setMozhuo(Boolean mozhuo) {
-    isMozhuo = mozhuo;
+  public void setUnbalanceMozhuo(Boolean unbalanceMozhuo) {
+    isUnbalanceMozhuo = unbalanceMozhuo;
   }
 
   public String getPoolingCode() {
