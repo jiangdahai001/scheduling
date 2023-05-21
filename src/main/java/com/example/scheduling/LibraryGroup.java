@@ -15,10 +15,12 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
   private Boolean isUnbalance;
   // 是否单端汉明距离放宽限制（F）
   private Boolean isHammingDistantF;
-  // 是否同lane上机（同lane上机）
-  private Boolean isSameLane;
   // 是否单端index文库
   private Boolean isSingleEnd;
+  // 同lane上机限制
+  private String sameLaneLimit;
+  // 是否墨卓样本
+  private Boolean isMozhuo;
 
   // 总数据量
   private Float dataSize;
@@ -61,14 +63,6 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
     this.code = code;
   }
 
-  public Boolean getSameLane() {
-    return isSameLane;
-  }
-
-  public void setSameLane(Boolean sameLane) {
-    isSameLane = sameLane;
-  }
-
   public Map<CommonComponent.IndexType, List<String>> getHammingDistantLimitCodeMap() {
     return hammingDistantLimitCodeMap;
   }
@@ -105,6 +99,22 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
   }
   public Boolean getUrgent() {
     return isUrgent;
+  }
+
+  public String getSameLaneLimit() {
+    return sameLaneLimit;
+  }
+
+  public void setSameLaneLimit(String sameLaneLimit) {
+    this.sameLaneLimit = sameLaneLimit;
+  }
+
+  public Boolean getMozhuo() {
+    return isMozhuo;
+  }
+
+  public void setMozhuo(Boolean mozhuo) {
+    isMozhuo = mozhuo;
   }
 
   public void setUrgent(Boolean urgent) {

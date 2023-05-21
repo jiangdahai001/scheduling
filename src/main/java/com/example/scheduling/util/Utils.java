@@ -350,57 +350,6 @@ public class Utils {
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
     return dateFormat.format(calendar.getTime());
   }
-
-  /**
-   * 判断能否将文库组列表加入到一个lane中
-   * @param lane 待加入的目标lane
-   * @param list 待加入的文库组列表
-   * @return 能否加入
-   */
-  public static Boolean canAddLibraryGroupListToLane(Lane lane, List<LibraryGroup> list) {
-    Float lgDataSize = 0f;
-    Float lgUnbalanceDataSize = 0f;
-    Float lgSingleEndDataSize = 0f;
-    // 判断数据量是否超过限制
-    for (LibraryGroup lg : list) {
-      lgDataSize += lg.getDataSize();
-      if(lg.getUnbalance()) {
-        lgUnbalanceDataSize += lg.getDataSize();
-      }
-      if(lg.getSingleEnd()) {
-        lgSingleEndDataSize += lg.getDataSize();
-      }
-    }
-    if(lane.getDataSize() + lgDataSize > lane.getDataSizeCeiling()) {
-      return false;
-    }
-    if(lane.getUnbalanceDataSize() + lgUnbalanceDataSize > lane.getUnbalanceDataSizeCeiling()) {
-      return false;
-    }
-    CommonComponent.IndexType indexType = lane.getIndexType();
-    if(CommonComponent.IndexType.isPairEnd(indexType)) {
-      float laneSingleEndDataSizeTmp = lgSingleEndDataSize + lane.getSingleEndDataSize();
-      float laneDataSizeTmp = lgSingleEndDataSize + lane.getDataSize();
-      if(laneDataSizeTmp < lane.getDataSizeFloor()) {
-        laneDataSizeTmp = lane.getDataSizeFloor();
-      }
-      if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
-        // ToDO
-        // 这里目前只是判断当前的数据需要满足情况，有一种情况未考虑，就是当前的情况不满足，但是后续在lane中新增文库组后，条件又满足了
-//        System.out.println("**&&*&*&*&&(*(&*&*&*");
-        return false;
-      }
-    }
-    for(LibraryGroup lg1: list) {
-      for(LibraryGroup lg2:lane.getLibraryGroupList()) {
-        if(lg2.getHammingDistantLimitCodeMap().get(indexType).contains(lg1.getCode())) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   /**
    * 查看当前lane中，文库组列表能否加入到lane列表的其他lane中
    * @param currentLaneIndex 当前lane在列表中的index
@@ -506,14 +455,55 @@ public class Utils {
   }
   /**
    * 判断能否将一个文库组加入到lane中
-   * @param lane
-   * @param libraryGroup
-   * @return
+   * @param lane 目标lane
+   * @param libraryGroup 目标文库组
+   * @return 是否可以加入
    */
   public static boolean canAddLibraryGroupToLane(Lane lane, LibraryGroup libraryGroup) {
-    List<LibraryGroup> list = new ArrayList<>();
-    list.add(libraryGroup);
-    return canAddLibraryGroupListToLane(lane, list);
+    Float lgDataSize = libraryGroup.getDataSize();
+    Float lgUnbalanceDataSize = 0f;
+    Float lgSingleEndDataSize = 0f;
+    // 判断数据量是否超过限制
+    if(libraryGroup.getUnbalance()) {
+      lgUnbalanceDataSize = libraryGroup.getDataSize();
+    }
+    if(libraryGroup.getSingleEnd()) {
+      lgSingleEndDataSize = libraryGroup.getDataSize();
+    }
+    if(lane.getDataSize() + lgDataSize > lane.getDataSizeCeiling()) {
+      return false;
+    }
+    if(lane.getUnbalanceDataSize() + lgUnbalanceDataSize > lane.getUnbalanceDataSizeCeiling()) {
+      return false;
+    }
+    CommonComponent.IndexType indexType = lane.getIndexType();
+    if(CommonComponent.IndexType.isPairEnd(indexType)) {
+      float laneSingleEndDataSizeTmp = lgSingleEndDataSize + lane.getSingleEndDataSize();
+      float laneDataSizeTmp = lgSingleEndDataSize + lane.getDataSize();
+      if(laneDataSizeTmp < lane.getDataSizeFloor()) {
+        laneDataSizeTmp = lane.getDataSizeFloor();
+      }
+      if(laneSingleEndDataSizeTmp / laneDataSizeTmp > lane.getSingleEndRatioLimit()) {
+        // ToDO
+        // 这里目前只是判断当前的数据需要满足情况，有一种情况未考虑，就是当前的情况不满足，但是后续在lane中新增文库组后，条件又满足了
+//        System.out.println("**&&*&*&*&&(*(&*&*&*");
+        return false;
+      }
+    }
+    List<LibraryGroup> laneLibraryGroupList = lane.getLibraryGroupList();
+    for(LibraryGroup lg:laneLibraryGroupList) {
+      // 查看同lane上机是否符合条件
+      if(!lg.getSameLaneLimit().equals("") && !libraryGroup.getSameLaneLimit().equals("")) {
+        if(!lg.getSameLaneLimit().equals(libraryGroup.getSameLaneLimit())) {
+          return false;
+        }
+      }
+      // 查看汉明距离是否符合条件
+      if(lg.getHammingDistantLimitCodeMap().get(indexType).contains(libraryGroup.getCode())) {
+        return false;
+      }
+    }
+    return true;
   }
   /**
    * 将一个文库组加入到一个lane中
@@ -1032,18 +1022,26 @@ public class Utils {
         } else {
           String productName = excelData.getProductName();
           String geneplusCode = excelData.getGeneplusCode();
+          String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
+          List<String> noteList = Arrays.asList(notes.replaceAll("，", ",").split(","));
           // 判断是否需要新建一个文库组
           boolean needNew = true;
-          if(excelData.getNotes() != null && excelData.getNotes().contains("同lane上机")) {
-            // 如果是同lane上机，并且之前已经有符合条件的同lane上机的文库组，那就直接使用之前的那个文库组
-            for(LibraryGroup libraryGroup:libraryGroupMap.values()) {
-              if(libraryGroup.getProductName().equals(productName)
-                && libraryGroup.getCode().equals(geneplusCode)
-                && libraryGroup.getSameLane()) {
-                lg = libraryGroup;
-                needNew = false;
-                break;
-              }
+          // 获取同lane上机限制：同lane上机/同lane上机1/同lane上机2。。。
+          String sameLaneLimit = "";
+          for(String n: noteList) {
+            if(n.matches("同lane上机\\d*?")) {
+              sameLaneLimit = n;
+              break;
+            }
+          }
+          // 如果是同lane上机，并且之前已经有符合条件的同lane上机的文库组，那就直接使用之前的那个文库组
+          for(LibraryGroup libraryGroup:libraryGroupMap.values()) {
+            if(libraryGroup.getProductName().equals(productName)
+              && libraryGroup.getCode().equals(geneplusCode)
+              && sameLaneLimit.equals(libraryGroup.getSameLaneLimit())) {
+              lg = libraryGroup;
+              needNew = false;
+              break;
             }
           }
           if(needNew) {
@@ -1051,23 +1049,18 @@ public class Utils {
             lg = new LibraryGroup();
             lg.setProductName(excelData.getProductName());
             lg.setCode(excelData.getGeneplusCode());
-            if (excelData.getNotes() != null) {
-              if(excelData.getNotes().contains("加急")) {
-                lg.setUrgent(true);
-                si.setUrgentLibraryGroupSize(si.getUrgentLibraryGroupSize() + 1);
-                si.setUrgentDataSize(si.getUrgentDataSize() + itemSize);
-              } else {
-                lg.setUrgent(false);
-              }
-              lg.setUnbalance(excelData.getNotes().contains("不平衡文库"));
-              lg.setHammingDistantF(excelData.getNotes().contains("F"));
-              lg.setSameLane(excelData.getNotes().contains("同lane上机"));
+            if(noteList.contains("加急")) {
+              lg.setUrgent(true);
+              si.setUrgentLibraryGroupSize(si.getUrgentLibraryGroupSize() + 1);
+              si.setUrgentDataSize(si.getUrgentDataSize() + itemSize);
             } else {
               lg.setUrgent(false);
-              lg.setUnbalance(false);
-              lg.setHammingDistantF(false);
-              lg.setSameLane(false);
             }
+            lg.setUnbalance(noteList.contains("不平衡文库"));
+            lg.setHammingDistantF(noteList.contains("F"));
+            lg.setSameLaneLimit(sameLaneLimit);
+            lg.setMozhuo(noteList.contains("墨卓"));
+
             lg.setSingleEnd(excelData.getR()==null || excelData.getR().equals(""));
             lg.setDataSize(0f);
             lg.setLibraryList(new ArrayList<>());

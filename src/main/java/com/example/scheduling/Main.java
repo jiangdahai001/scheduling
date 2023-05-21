@@ -99,17 +99,17 @@ public class Main {
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
     resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 3);
     Utils.printResult(resultList, true);
-    resultList.forEach(result -> {
-      if(result.getSuccess()) {
-        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-backtrace.xlsx";
-        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
-        Utils.writeExcel(fileName, result, true);
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    });
+//    resultList.forEach(result -> {
+//      if(result.getSuccess()) {
+//        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-backtrace.xlsx";
+//        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+//        Utils.writeExcel(fileName, result, true);
+//        try {
+//          Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//          e.printStackTrace();
+//        }
+//      }
+//    });
   }
 }

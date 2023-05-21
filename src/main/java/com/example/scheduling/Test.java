@@ -20,53 +20,19 @@ public class Test {
     System.out.println(Utils.getTimeString(end - start));
   }
   public static void test (){
-    // 要不要在任务中sleep？
-    final boolean[] flag = {true};
-    Timer timer = new Timer();
-    TimerTask timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        System.out.println("timer start");
-        flag[0] = false;
-        System.out.println("timer end");
+    String a = "同lane上机2,F，同lane上机1，同lane上机,lane100";
+//    a = "";
+//    a = null;
+    a = a==null? "":a;
+    List<String> notes = Arrays.asList(a.replaceAll("，", ",").split(","));
+    for (String s : notes) {
+      if(s.equals("同lane上机")) {
+        System.out.println("同lane上机");
       }
-    };
-    timer.schedule(timerTask, 10);
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    Future<Integer> future = executor.submit(() -> {
-      System.out.println("task start");
-//      for(int i=0;i<10;i++) {
-//        if (flag[0]) {
-//          break;
-//        }
-//        Thread.sleep(2000);
-//      }
-      if(flag[0]) Thread.sleep(2000);
-      System.out.println("task finish");
-      return 42;
-    });
-
-    try {
-      System.out.println("main start");
-      Thread.sleep(200);
-      System.out.println("main end");
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+      if (s.matches("同lane上机\\d*?")) {
+        System.out.println(s);
+      }
     }
-// 调用 get 方法，等待任务完成并返回结果
-    int result = 0;
-    try {
-      result = future.get(200, TimeUnit.MILLISECONDS);
-      System.out.println("task ok");
-    } catch (TimeoutException e) {
-      future.cancel(true);
-      System.out.println("task timeout");
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    executor.shutdown();
-    timer.cancel();
-    System.out.println(result);
   }
 
   public static boolean doSomethingWithTimeout(int timeoutInSeconds) throws InterruptedException {
