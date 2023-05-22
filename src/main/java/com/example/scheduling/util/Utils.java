@@ -211,21 +211,29 @@ public class Utils {
       }
     }
     switch (rule) {
-      case "I5正+I7正", "R正+F正", "I7正", "F正" -> {
-        sb.append(R);
-        sb.append(F);
+      case "I5正+I7正", "R正+F正", "R+F", "I7正", "F正" -> {
+        sb.append(R).append(F);
       }
-      case "I5正+I7反", "R正+F反", "I7反", "F反" -> {
-        sb.append(R);
-        sb.append(getReverseComplementaryString(F));
+      case "I5正+I7反", "R正+F反", "R+F反", "I7反", "F反" -> {
+        sb.append(R).append(getReverseComplementaryString(F));
       }
-      case "I5反+I7正", "R反+F正" -> {
-        sb.append(getReverseComplementaryString(R));
-        sb.append(F);
+      case "I5反+I7正", "R反+F正", "R反+F" -> {
+        sb.append(getReverseComplementaryString(R)).append(F);
       }
       case "I5反+I7反", "R反+F反" -> {
-        sb.append(getReverseComplementaryString(R));
-        sb.append(getReverseComplementaryString(F));
+        sb.append(getReverseComplementaryString(R)).append(getReverseComplementaryString(F));
+      }
+      case "F+R" -> {
+        sb.append(F).append(R);
+      }
+      case "F反+R" -> {
+        sb.append(getReverseComplementaryString(F)).append(R);
+      }
+      case "F+R反" -> {
+        sb.append(F).append(getReverseComplementaryString(R));
+      }
+      case "F反+R反" -> {
+        sb.append(getReverseComplementaryString(F)).append(getReverseComplementaryString(R));
       }
       default -> {
         System.out.println(rule);
@@ -540,8 +548,8 @@ public class Utils {
   }
   /**
    * 将一个文库组移出lane
-   * @param lane
-   * @param libraryGroup
+   * @param lane 目标lane
+   * @param libraryGroup 目标文库组
    */
   public static void removeLibraryGroupFromLane(Lane lane, LibraryGroup libraryGroup) {
     List<LibraryGroup> list = lane.getLibraryGroupList();
@@ -550,6 +558,9 @@ public class Utils {
     lane.setDataSize(lane.getDataSize() - size);
     if(libraryGroup.getUnbalance()) {
       lane.setUnbalanceDataSize(lane.getUnbalanceDataSize() - size);
+      if(libraryGroup.getUnbalanceMozhuo()) {
+        lane.setUnbalanceMozhuoDataSize(lane.getUnbalanceMozhuoDataSize() - size);
+      }
     }
     if(libraryGroup.getSingleEnd()) {
       lane.setSingleEndDataSize(lane.getSingleEndDataSize() - size);
@@ -956,7 +967,7 @@ public class Utils {
     StringBuilder notes = new StringBuilder();
     Boolean baseBalance = checkBaseRatio(sr.getLaneList());
     Boolean dataSizeFlag = sr.getLaneList().stream().allMatch(lane -> {
-      return lane.getDataSize() > lane.getDataSizeFloor() && lane.getDataSize() <= lane.getDataSizeCeiling();
+      return lane.getDataSize() >= lane.getDataSizeFloor() && lane.getDataSize() <= lane.getDataSizeCeiling();
     });
     Boolean isUrgentMet = sr.getUnscheduledLibraryGroupMap().values().stream().allMatch(libraryGroup -> {
       return !libraryGroup.getUrgent();
@@ -1223,14 +1234,12 @@ public class Utils {
     List<Lane> laneList = new ArrayList<>();
     for(int i=0;i<size;i++) {
       Lane lane = new Lane();
-//      lane.setDataSizeCeiling(1400f);
-//      lane.setDataSizeFloor(1300f);
-      laneList.add(lane);
-    }
-    if(indexTypeList != null) {
-      for(int i=0;i<indexTypeList.size();i++) {
-        laneList.get(i).setIndexType(indexTypeList.get(i));
+      lane.setDataSizeCeiling(1400f);
+      lane.setDataSizeFloor(1300f);
+      if(indexTypeList != null) {
+        lane.setIndexType(indexTypeList.get(i));
       }
+      laneList.add(lane);
     }
     return laneList;
   }

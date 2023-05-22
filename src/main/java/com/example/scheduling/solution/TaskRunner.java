@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 
 public class TaskRunner {
   // 线程池最大线程数
-  private static final int MAX_THREADS = 10;
+  private static final int MAX_THREADS = 5;
   // 线程超时时间值
-  private static final int TIMEOUT = 60;
+  private static final int TIMEOUT = 6;
   // 线程超时单位
   private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
@@ -29,10 +29,11 @@ public class TaskRunner {
     List<CommonComponent.ScheduledResult> list = CommonComponent.SchedulingInfo.getInstance().getResultList();
     // 创建线程池
     ExecutorService executor = Executors.newFixedThreadPool(MAX_THREADS);
-    List<CommonComponent.IndexType> indexTypeList = new ArrayList<>();
-//    indexTypeList.add(CommonComponent.IndexType.P8);
+    List<CommonComponent.IndexType> indexTypeList;
+//    indexTypeList = new ArrayList<>();
 //    indexTypeList.add(CommonComponent.IndexType.P10);
-//    indexTypeList.add(CommonComponent.IndexType.S10);
+//    indexTypeList.add(CommonComponent.IndexType.P10);
+//    indexTypeList.add(CommonComponent.IndexType.P10);
 //    laneList = Utils.initLaneList(laneList.size(), indexTypeList);
     // 初始化countdownlatch，count是期望找到的可能性个数
     CountDownLatch countDownLatch = new CountDownLatch(expectedCount);
@@ -73,7 +74,9 @@ public class TaskRunner {
           } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
           }
-          if(sr!=null) list.add(sr);
+          if(sr!=null && sr.getSuccess()) {
+            list.add(sr);
+          }
         }
       }
       for (Future<?> f : futures) {

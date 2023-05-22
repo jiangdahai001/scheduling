@@ -39,11 +39,10 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
     try {
       sr = future.get(TIMEOUT, TIME_UNIT);
       if(sr.getSuccess()) countDownLatch.countDown();
-    } catch (TimeoutException e) {
-//      System.out.println("task timeout");
     } catch (Exception e) {
-//      System.out.println("task interrupted cause thread been interrupted");
-    } finally {
+      return null;
+    }
+    finally {
       executor.shutdown();
     }
     return sr;
@@ -73,13 +72,13 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
         sr.setUnscheduledLibraryGroupMap(unscheduledMap);
         Utils.setScheduledResultInfo(sr);
         if(!sr.getSuccess()) continue;
-        System.out.println(indexTypeList + "======== success ======");
+        System.out.println(indexTypeList + "======== task success ======");
         break;
       }
       // 全部遍历了，无法排出来
       // lane中数据为空，说明全部都试了，无法排出来
       if(lastNumber == 0) {
-        System.out.println(indexTypeList + "======== failed ======");
+        System.out.println(indexTypeList + "======== task failed ======");
         break;
       }
     }
