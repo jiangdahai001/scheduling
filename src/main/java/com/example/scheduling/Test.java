@@ -19,20 +19,25 @@ public class Test {
     System.out.println((end - start) + "ms");
     System.out.println(Utils.getTimeString(end - start));
   }
-  public static void test (){
-    String a = "同lane上机2,F，同lane上机1，同lane上机,lane100";
-//    a = "";
-//    a = null;
-    a = a==null? "":a;
-    List<String> notes = Arrays.asList(a.replaceAll("，", ",").split(","));
-    for (String s : notes) {
-      if(s.equals("同lane上机")) {
-        System.out.println("同lane上机");
-      }
-      if (s.matches("同lane上机\\d*?")) {
-        System.out.println(s);
-      }
-    }
+  public static void test () throws Exception{
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    Future<Integer> future = executor.submit(() -> {
+      Thread.sleep(1000);
+      return 1;
+    });
+
+    Future<Integer> nestedFuture = executor.submit(() -> {
+      Future<Integer> result = executor.submit(() -> {
+        Thread.sleep(1000);
+        return 2;
+      });
+      return result.get(); // 等待第二层Future完成并获取结果
+    });
+
+    System.out.println(future.get()); // 正常输出1
+    System.out.println(nestedFuture.get()); // 正常输出2
+    executor.shutdown();
   }
 
   public static boolean doSomethingWithTimeout(int timeoutInSeconds) throws InterruptedException {

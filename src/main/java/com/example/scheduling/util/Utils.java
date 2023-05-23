@@ -950,11 +950,12 @@ public class Utils {
     for(int m=0;m<increment;m++) {
       for (int i = indexTypeList.size() - 1; i >= 0; i--) {
         CommonComponent.IndexType type = indexTypeList.get(i);
-          if (CommonComponent.IndexType.isLast(type)) {
-            indexTypeList.set(i, CommonComponent.IndexType.getFirst());
-            continue;
-          }
-        indexTypeList.set(i, type.plus(1)); break;
+        if (CommonComponent.IndexType.isLast(type)) {
+          indexTypeList.set(i, CommonComponent.IndexType.getFirst());
+          continue;
+        }
+        CommonComponent.IndexType indexType = type.plus(1);
+        indexTypeList.set(i, indexType); break;
       }
     }
   }
@@ -1061,7 +1062,7 @@ public class Utils {
           boolean needNew = true;
 
           String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
-          List<String> noteList = Arrays.asList(notes.replaceAll("，", ",").split(","));
+          List<String> noteList = Arrays.asList(notes.split(",|，"));
           String sameLaneLimit = "";
           for(String n: noteList) {
             if(n.matches("同lane上机\\d*?")) {
@@ -1234,8 +1235,8 @@ public class Utils {
     List<Lane> laneList = new ArrayList<>();
     for(int i=0;i<size;i++) {
       Lane lane = new Lane();
-      lane.setDataSizeCeiling(1400f);
-      lane.setDataSizeFloor(1300f);
+//      lane.setDataSizeCeiling(1400f);
+//      lane.setDataSizeFloor(1300f);
       if(indexTypeList != null) {
         lane.setIndexType(indexTypeList.get(i));
       }
