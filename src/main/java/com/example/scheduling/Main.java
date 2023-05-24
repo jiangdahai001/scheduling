@@ -97,7 +97,7 @@ public class Main {
     Utils.preprocess(libraryGroupMap);
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-    resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 3);
+    resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 1);
     Utils.printResult(resultList, true);
 //    resultList.forEach(result -> {
 //      if(result.getSuccess()) {
