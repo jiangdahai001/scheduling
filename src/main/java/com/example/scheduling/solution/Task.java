@@ -34,13 +34,15 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
   @Override
   public CommonComponent.ScheduledResult call() {
     CommonComponent.ScheduledResult sr = null;
+    CompletableFuture<CommonComponent.ScheduledResult> future = CompletableFuture.supplyAsync(this::callBusiness).orTimeout(TIMEOUT, TIME_UNIT);
     try {
-      sr = CompletableFuture.supplyAsync(this::callBusiness).orTimeout(TIMEOUT, TIME_UNIT).get();
+      sr = future.get();
       if(sr.getSuccess()) countDownLatch.countDown();
     } catch (Exception e) {
 //      System.out.println(Thread.currentThread().getName() + "====>" + indexTypeList+"===" + e.toString());
     } finally {
-      this.cancel();
+//      this.cancel();
+      future.cancel(true);
     }
     return sr;
   }
