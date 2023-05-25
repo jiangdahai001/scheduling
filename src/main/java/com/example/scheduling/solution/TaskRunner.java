@@ -14,7 +14,7 @@ public class TaskRunner {
   // 线程池最大线程数
   private static final int MAX_THREADS = 10;
   // 线程超时时间值
-  private static final int TIMEOUT = 60;
+  private static final int TIMEOUT = 6;
   // 线程超时单位
   private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
@@ -27,8 +27,8 @@ public class TaskRunner {
    */
   public static List<CommonComponent.ScheduledResult> backtrace(Map<String, LibraryGroup> libraryGroupMap, List<Lane> laneList, int expectedCount){
     List<CommonComponent.ScheduledResult> list = CommonComponent.SchedulingInfo.getInstance().getResultList();
-    // 创建线程池
-    ExecutorService executor = Executors.newFixedThreadPool(MAX_THREADS);
+    // 获取线程池
+    ExecutorService threadPool = Executors.newFixedThreadPool(MAX_THREADS);
     List<CommonComponent.IndexType> indexTypeList;
 //    indexTypeList = new ArrayList<>();
 //    indexTypeList.add(CommonComponent.IndexType.P8);
@@ -52,9 +52,9 @@ public class TaskRunner {
     }
 
     // 将任务列表提交给线程池，线程池开始调度运行任务
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    List<Future<?>> futures = new ArrayList<>();
     for(Task task: tasks) {
-      Future<?> future = executor.submit(task);
+      Future<?> future = threadPool.submit(task);
       futures.add(future);
     }
     // countdownlatch开始阻塞，等待任务完成或超时
@@ -66,30 +66,9 @@ public class TaskRunner {
     } catch (InterruptedException e) {
       System.out.println("task interrupted");
     } finally {
-      // 将完成任务的结果保存到结果列表种
-      for(Future<?> future: futures) {
-        // 这里加的list.size()<expectedCount主要是让结果数目不大于填入的期望个数或保持一致（因为多线程的原因，有可能会多）
-        if(future.isDone() && list.size()<expectedCount) {
-          CommonComponent.ScheduledResult sr = null;
-          try {
-            sr = (CommonComponent.ScheduledResult) future.get();
-          } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-          }
-          if(sr!=null && sr.getSuccess()) {
-            list.add(sr);
-          }
-        }
-      }
-      for (Future<?> f : futures) {
-        f.cancel(true);
-      }
-      for (Task t : tasks) {
-        t.cancel();
-      }
       // shutdown thread pool
-      System.out.println("shutdown");
-      executor.shutdown();
+      threadPool.shutdownNow();
+      System.out.println("shutdownNow");
     }
     return list;
   }

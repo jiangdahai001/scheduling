@@ -32,8 +32,8 @@ public class Lane {
   public Lane(){
     this.indexType = CommonComponent.IndexType.getFirst();
     this.dataSize = 0f;
-    this.dataSizeCeiling = 1450f;
-    this.dataSizeFloor = 1350f;
+    this.dataSizeCeiling = CommonComponent.SchedulingInfo.getInstance().getLaneDataSizeCeiling();
+    this.dataSizeFloor = CommonComponent.SchedulingInfo.getInstance().getLaneDataSizeFloor();
     this.unbalanceDataSize = 0f;
     this.unbalanceMozhuoDataSize = 0f;
     this.unbalanceMozhuoDataSizeCeiling = 150f;

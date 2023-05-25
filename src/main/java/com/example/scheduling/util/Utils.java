@@ -1218,9 +1218,20 @@ public class Utils {
    * @return lane的数量
    */
   public static int getLaneListSize(float totalDataSize) {
-    int count = (int) (totalDataSize / 1450);
-    if (totalDataSize % 1450 > 1250) {
-      count++;
+    int count = 1;
+    float floor = CommonComponent.SchedulingInfo.getInstance().getLaneDataSizeFloor();
+    float ceiling = CommonComponent.SchedulingInfo.getInstance().getLaneDataSizeCeiling();
+    for(int i=1;;i++) {
+      // 数据量正好落在某个lane数量的最小和最大区间，直接用这个lane数量
+      if(totalDataSize >= i*floor && totalDataSize <= i*ceiling) {
+        count = i;
+        break;
+      }
+      // 数据量正好落在某个lane数量的最大和lane数量+1的最小区间，也可以用这个lane数量
+      if(totalDataSize > i*ceiling && totalDataSize < (i+1)*floor) {
+        count = i;
+        break;
+      }
     }
     return count;
   }

@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-public class Task implements Callable<CommonComponent.ScheduledResult> {
+public class Task implements Runnable {
   // 线程超时时间值
   private static final int TIMEOUT = 2;
   // 线程超时单位
@@ -29,22 +29,22 @@ public class Task implements Callable<CommonComponent.ScheduledResult> {
 
   /**
    * 获取排单结果的线程任务，这里主要用作新启动一个线程用于实际排单，当前线程阻塞等待结果或超时
-   * @return 排单结果
    */
   @Override
-  public CommonComponent.ScheduledResult call() {
-    CommonComponent.ScheduledResult sr = null;
+  public void run() {
     CompletableFuture<CommonComponent.ScheduledResult> future = CompletableFuture.supplyAsync(this::callBusiness).orTimeout(TIMEOUT, TIME_UNIT);
     try {
-      sr = future.get();
-      if(sr.getSuccess()) countDownLatch.countDown();
+      CommonComponent.ScheduledResult sr = future.get();
+      if(sr.getSuccess()) {
+        System.out.println(Thread.currentThread().getName() + "====>" + indexTypeList+"===" + countDownLatch.getCount());
+        CommonComponent.SchedulingInfo.getInstance().getResultList().add(sr);
+        countDownLatch.countDown();
+      }
     } catch (Exception e) {
 //      System.out.println(Thread.currentThread().getName() + "====>" + indexTypeList+"===" + e.toString());
     } finally {
-//      this.cancel();
       future.cancel(true);
     }
-    return sr;
   }
 
 

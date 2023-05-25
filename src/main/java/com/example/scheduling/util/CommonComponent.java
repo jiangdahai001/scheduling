@@ -2,12 +2,8 @@ package com.example.scheduling.util;
 
 import com.example.scheduling.Lane;
 import com.example.scheduling.LibraryGroup;
-import org.apache.poi.ss.formula.functions.Index;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class CommonComponent {
@@ -159,6 +155,10 @@ public class CommonComponent {
   public static class SchedulingInfo {
     // 排单基础信息单例
     private static SchedulingInfo instance = null;
+    // lane的理想数据量
+    private float idealLaneDataSize;
+    private float laneDataSizeCeiling;
+    private float laneDataSizeFloor;
     // 排单数据量
     private float dataSize;
     // 加急排单数据量
@@ -175,7 +175,10 @@ public class CommonComponent {
       this.urgentDataSize = 0f;
       this.libraryGroupSize = 0;
       this.urgentLibraryGroupSize = 0;
-      this.resultList = new ArrayList<>();
+      this.idealLaneDataSize = 1400f;
+      this.laneDataSizeCeiling = 1450f;
+      this.laneDataSizeFloor = 1350f;
+      this.resultList = Collections.synchronizedList(new ArrayList<>());
     }
     public static SchedulingInfo getInstance() {
       if(instance == null) {
@@ -183,11 +186,38 @@ public class CommonComponent {
       }
       return instance;
     }
+    public static void initInstance() {
+      instance = null;
+    }
     public float getDataSize() {
       return dataSize;
     }
     public void setDataSize(float dataSize) {
       this.dataSize = dataSize;
+    }
+
+    public float getIdealLaneDataSize() {
+      return idealLaneDataSize;
+    }
+
+    public void setIdealLaneDataSize(float idealLaneDataSize) {
+      this.idealLaneDataSize = idealLaneDataSize;
+    }
+
+    public float getLaneDataSizeCeiling() {
+      return laneDataSizeCeiling;
+    }
+
+    public void setLaneDataSizeCeiling(float laneDataSizeCeiling) {
+      this.laneDataSizeCeiling = laneDataSizeCeiling;
+    }
+
+    public float getLaneDataSizeFloor() {
+      return laneDataSizeFloor;
+    }
+
+    public void setLaneDataSizeFloor(float laneDataSizeFloor) {
+      this.laneDataSizeFloor = laneDataSizeFloor;
     }
 
     public float getUrgentDataSize() {

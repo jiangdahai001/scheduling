@@ -3,23 +3,50 @@ package com.example.scheduling;
 import com.example.scheduling.solution.TaskRunner;
 import com.example.scheduling.util.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 public class Main {
-  // 排单结果列表
-  public static List<CommonComponent.ScheduledResult> resultList = new ArrayList<>();
-  public static Integer solutionCount = 0;
   /**
    * 主函数
    * @param args
    */
-  public static void main(String[] args) {
-//    greedySolution();
-    backtraceSolution();
+  public static void main(String[] args) throws IOException {
+    backtraceOnce();
+//    backtraceWhile();
+  }
+  public static void backtraceWhile() throws IOException{
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    String in;
+    while(true){
+      CommonComponent.SchedulingInfo.initInstance();
+      System.out.println("请选择操作：排单：1；退出：2；");
+      in = br.readLine();
+      switch (in) {
+        case "1", "" -> {
+          System.out.println("请输入Lane的理想数据量(默认1400): ");
+          in = br.readLine();
+          if(!in.equals("")) {
+            float idealLaneDataSize = Float.parseFloat(in);
+            CommonComponent.SchedulingInfo.getInstance().setIdealLaneDataSize(idealLaneDataSize);
+            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeCeiling(idealLaneDataSize + 50);
+            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeFloor(idealLaneDataSize - 50);
+          }
+          backtraceOnce();
+        }
+        case("2") -> {
+          System.exit(1);
+        }
+        default -> {}
+      }
+    }
   }
   public static void greedySolution() {
+    List<CommonComponent.ScheduledResult> resultList = new ArrayList<>();
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
     String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
@@ -38,7 +65,7 @@ public class Main {
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     // 初始化lane列表
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-
+    int solutionCount = 0;
     while (true) {
       indexTypeList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
       solutionCount++;
@@ -75,18 +102,18 @@ public class Main {
     // 将排单结果打印出来
     Utils.printResult(resultList, false);
     // 将排单结果输出到excel
-    resultList.forEach(result -> {
-      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
-      Utils.writeExcel(fileName, result, true);
-      System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    });
+//    resultList.forEach(result -> {
+//      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
+//      Utils.writeExcel(fileName, result, true);
+//      System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+//      try {
+//        Thread.sleep(1000);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    });
   }
-  public static void backtraceSolution() {
+  public static void backtraceOnce() {
     System.out.println("hello backtrace");
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
@@ -97,7 +124,7 @@ public class Main {
     Utils.preprocess(libraryGroupMap);
     int laneListSize = Utils.getLaneListSize(CommonComponent.SchedulingInfo.getInstance().getDataSize());
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
-    resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 1);
+    List<CommonComponent.ScheduledResult> resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 1);
     Utils.printResult(resultList, true);
 //    resultList.forEach(result -> {
 //      if(result.getSuccess()) {
