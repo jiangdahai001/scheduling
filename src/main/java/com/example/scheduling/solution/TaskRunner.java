@@ -62,10 +62,15 @@ public class TaskRunner {
       boolean finished = countDownLatch.await(TIMEOUT, TIME_UNIT);
       if(finished) {
         System.out.println("task finished in time");
+      } else {
+        System.out.println("task cancel caused by timeout");
       }
     } catch (InterruptedException e) {
       System.out.println("task interrupted");
     } finally {
+      for(Task task:tasks) {
+        task.cancel();
+      }
       // shutdown thread pool
       threadPool.shutdownNow();
       System.out.println("shutdownNow");

@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 public class Utils {
   /**
    * 计算字符串的汉明距离
-   * @param str1
-   * @param str2
-   * @return
+   * @param str1 字符串1
+   * @param str2 字符串2
+   * @return 返回2个字符串的汉明距离
    */
   public static int calculateHammingDistant(String str1, String str2) {
     char[] s1 = str1.toCharArray();
@@ -81,7 +81,7 @@ public class Utils {
    * @param rule 拆分规则
    * @param F 对应的是I7
    * @param R 对应的是I5
-   * @return
+   * @return 返回各种indextype下的index序列的map
    */
   public static Map<CommonComponent.IndexType, String> generateIndexSeqMap(String rule, String F, String R) {
     Map<CommonComponent.IndexType, String> map = new HashMap<>();
@@ -245,7 +245,7 @@ public class Utils {
   /**
    * 获取碱基互补序列
    * @param source 原始序列
-   * @return
+   * @return 返回碱基互补序列
    */
   public static String getReverseComplementaryString(String source) {
     Map<String, String> map = new HashMap<>();
@@ -264,7 +264,8 @@ public class Utils {
 
   /**
    * 输出碱基比率时的表头
-   * @return
+   * @param indexType index类型
+   * @return 返回碱基比率的表头
    */
   public static List<List<String>> getBaseRatioExcelHead(CommonComponent.IndexType indexType) {
     List<List<String>> list = ListUtils.newArrayList();
@@ -290,9 +291,8 @@ public class Utils {
 
   /**
    * 输出碱基比率时的数据
-   * @return
+   * @return 碱基比率时的数据
    */
-
   public static List<List<Object>> getBaseRatioExcelDataList(Map<String, List<Float>> map) {
     List<List<Object>> list = new ArrayList<>();
     map.forEach((key, value) -> {
@@ -441,8 +441,8 @@ public class Utils {
   }
   /**
    * 将一个文库组的列表加入到一个lane中
-   * @param lane
-   * @param list
+   * @param lane 目标lane
+   * @param list 目标文库组列表
    */
   public static void addLibraryGroupListToLane(Lane lane, List<LibraryGroup> list) {
     lane.getLibraryGroupList().addAll(list);
@@ -962,7 +962,7 @@ public class Utils {
 
   /**
    * 在已经有排单列表和未排单map的情况下，填充其他数据
-   * @param sr
+   * @param sr 排单结果对象
    */
   public static void setScheduledResultInfo(CommonComponent.ScheduledResult sr) {
     StringBuilder notes = new StringBuilder();
@@ -993,8 +993,8 @@ public class Utils {
   }
   /**
    * 获取一个lane的碱基比率数据
-   * @param lane
-   * @return
+   * @param lane 目标lane
+   * @return 返回碱基比率数据
    */
   public static Map<String, List<Float>> getBaseRatio(Lane lane) {
     List<CommonComponent.BaseRatioInfo> list = new ArrayList<>();
@@ -1009,7 +1009,7 @@ public class Utils {
   }
   /**
    * 检测碱基平衡
-   * @return
+   * @return 碱基是否平衡
    */
   public static Boolean checkBaseRatio(List<Lane> laneList) {
     for(Lane lane: laneList) {

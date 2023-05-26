@@ -13,18 +13,18 @@ import java.util.stream.Collectors;
 public class Main {
   /**
    * 主函数
-   * @param args
+   * @param args 命令行参数
    */
   public static void main(String[] args) throws IOException {
-    backtraceOnce();
-//    backtraceWhile();
+//    backtraceOnce();
+    backtraceWhile();
   }
   public static void backtraceWhile() throws IOException{
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     String in;
     while(true){
       CommonComponent.SchedulingInfo.initInstance();
-      System.out.println("请选择操作：排单：1；退出：2；");
+      System.out.println("请选择操作: 排单: 1; 退出: 2;");
       in = br.readLine();
       switch (in) {
         case "1", "" -> {
