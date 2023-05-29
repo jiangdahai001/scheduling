@@ -1052,16 +1052,16 @@ public class Utils {
         // 按行处理读取的数据
         LibraryGroup lg = null;
         String poolingCode = excelData.getPoolingCode()==null ? "":excelData.getPoolingCode();
+        String productName = excelData.getProductName();
+        String geneplusCode = excelData.getGeneplusCode();
+        String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
         // 判断是否在待排单的文库组中，不存在，新增；存在，加入新文库
         if(libraryGroupMap.containsKey(excelData.getGeneplusCode())) {
           lg = libraryGroupMap.get(excelData.getGeneplusCode());
         } else {
-          String productName = excelData.getProductName();
-          String geneplusCode = excelData.getGeneplusCode();
           // 判断是否需要新建一个文库组
           boolean needNew = true;
 
-          String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
           List<String> noteList = Arrays.asList(notes.split(",|，"));
           String sameLaneLimit = "";
           for(String n: noteList) {
@@ -1078,7 +1078,15 @@ public class Utils {
               needNew = false;
               break;
             }
-            // 获取同lane上机限制：同lane上机/同lane上机1/同lane上机2。。。
+            // 获取同lane上机的限制：仅限：同lane上机
+            if(libraryGroup.getProductName().equals(productName)
+              && libraryGroup.getSameLaneLimit().equals("同lane上机")
+              && sameLaneLimit.equals("同lane上机")) {
+              lg = libraryGroup;
+              needNew = false;
+              break;
+            }
+            // 获取同lane上机限制：同lane上机1/同lane上机2。。。
             if(libraryGroup.getProductName().equals(productName)
               && libraryGroup.getCode().equals(geneplusCode)
               && sameLaneLimit.equals(libraryGroup.getSameLaneLimit())) {
