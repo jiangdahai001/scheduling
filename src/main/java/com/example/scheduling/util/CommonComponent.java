@@ -41,6 +41,9 @@ public class CommonComponent {
     public static Boolean isSingleEnd(IndexType indexType) {
       return indexType.equals(S6)|| indexType.equals(S8) ||indexType.equals(S10);
     }
+    public static Boolean isExcluded(IndexType indexType) {
+      return indexType.equals(S6)|| indexType.equals(P6) ||indexType.equals(S10) ||indexType.equals(P10);
+    }
   }
   // index的序列对
   public static class FRPair {

@@ -5,6 +5,7 @@ import com.example.scheduling.util.Utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 public class Test {
   public static void main(String[] args) throws Exception{
@@ -16,11 +17,12 @@ public class Test {
     System.out.println(Utils.getTimeString(end - start));
   }
   public static void test () {
-    int expected = 1350;
-    int floor = expected - 50;
-    int ceiling = expected + 50;
-    for(int i=1;i<=8;i++) {
-      System.out.println("number: " + i + "---floor:" + i*floor + "---" + "ceiling:" + i*ceiling);
+    int solutionCount = 0;
+    while (true) {
+      if(solutionCount % 7 != 0) continue;
+      solutionCount++;
+      if (solutionCount >= 100) break;
+      System.out.println("solution count: " + solutionCount);
     }
   }
 }

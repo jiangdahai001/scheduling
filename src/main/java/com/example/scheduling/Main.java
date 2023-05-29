@@ -17,7 +17,8 @@ public class Main {
    */
   public static void main(String[] args) throws IOException {
 //    backtraceOnce();
-    backtraceWhile();
+//    backtraceWhile();
+    greedySolution();
   }
   public static void backtraceWhile() throws IOException{
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -48,7 +49,8 @@ public class Main {
   public static void greedySolution() {
     List<CommonComponent.ScheduledResult> resultList = new ArrayList<>();
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230525.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     // 新建文库组map，用于存放本次排单的数据，key为吉因加code，value为文库组对象
@@ -72,9 +74,9 @@ public class Main {
       System.out.println("solution count: " + solutionCount + "--" + indexTypeList);
 
       // 获取当前lane列表的情况下，文库组受汉明距离限制而不能排到一个lane中的信息
-      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
+//      Utils.setDynamicHammingDistantLimitCodeMap(libraryGroupMap, laneList, unscheduledMap);
       // 根据上面的限制，将肯定不能排入lane列表的文库组移到未排单map
-      Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
+//      Utils.moveToUnscheduledMapAccordingHammingDistance(laneList, libraryGroupMap, unscheduledMap);
 //      System.out.println("unscheduledMap:");
 //      Float unscheduledMapSize = 0f;
 //      for(Map.Entry<String, LibraryGroup> entry: unscheduledMap.entrySet()) {
@@ -91,16 +93,21 @@ public class Main {
       sr.setUnscheduledLibraryGroupMap(unscheduledMap);
       Utils.setScheduledResultInfo(sr);
       resultList.add(sr);
+      if(sr.getSuccess()) {
+        System.out.println("scheduling success break");
+        break;
+      }
       // 判断是否遍历完了所有可能的indextype组合，如果遍历完了，就跳出循环
       boolean finished = indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast);
       if(finished) break;
       // 如果没有遍历完所有indextype组合，就初始化lane列表和未排单列表，继续下一次排单
-      Utils.indexTypeListPlus(indexTypeList, 1);
+//      Utils.indexTypeListPlus(indexTypeList, 1);
+      Utils.indexTypeListPlusOne(indexTypeList);
       laneList = Utils.initLaneList(laneListSize, indexTypeList);
       unscheduledMap = new HashMap<>();
     }
     // 将排单结果打印出来
-    Utils.printResult(resultList, false);
+    Utils.printResult(resultList, true);
     // 将排单结果输出到excel
 //    resultList.forEach(result -> {
 //      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
@@ -117,7 +124,8 @@ public class Main {
     System.out.println("hello backtrace");
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230525.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);

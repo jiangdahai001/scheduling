@@ -44,10 +44,9 @@ public class TaskRunner {
       indexTypeList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
       boolean finished = indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast);
       if(finished) break;
-      Utils.indexTypeListPlus(indexTypeList, 1);
+//      Utils.indexTypeListPlus(indexTypeList, 1);
+      Utils.indexTypeListPlusOne(indexTypeList);
       laneList = Utils.initLaneList(laneList.size(), indexTypeList);
-      // 医检反馈现在不需要S6/P6的index类型，这里直接跳过
-      if(indexTypeList.contains(CommonComponent.IndexType.P6) || indexTypeList.contains(CommonComponent.IndexType.S6)) continue;
       tasks.add(new Task(libraryGroupMap, laneList, countDownLatch));
     }
 

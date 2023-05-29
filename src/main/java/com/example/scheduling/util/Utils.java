@@ -947,7 +947,7 @@ public class Utils {
    * @param increment 增量
    */
   public static void indexTypeListPlus(List<CommonComponent.IndexType> indexTypeList, int increment) {
-    for(int m=0;m<increment;m++) {
+    for (int m = 0; m < increment; m++) {
       for (int i = indexTypeList.size() - 1; i >= 0; i--) {
         CommonComponent.IndexType type = indexTypeList.get(i);
         if (CommonComponent.IndexType.isLast(type)) {
@@ -955,8 +955,30 @@ public class Utils {
           continue;
         }
         CommonComponent.IndexType indexType = type.plus(1);
-        indexTypeList.set(i, indexType); break;
+        indexTypeList.set(i, indexType);
+        break;
       }
+    }
+  }
+  /**
+   * 从旧的indexTypeList获取新的indexTypeList
+   * @param indexTypeList 旧的indexTypeList
+   */
+  public static void indexTypeListPlusOne(List<CommonComponent.IndexType> indexTypeList) {
+    while (true) {
+      if (indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast)) break;
+      for (int i = indexTypeList.size() - 1; i >= 0; i--) {
+        CommonComponent.IndexType type = indexTypeList.get(i);
+        if (CommonComponent.IndexType.isLast(type)) {
+          indexTypeList.set(i, CommonComponent.IndexType.getFirst());
+          continue;
+        }
+        CommonComponent.IndexType indexType = type.plus(1);
+        indexTypeList.set(i, indexType);
+        break;
+      }
+      boolean containExcludedType = indexTypeList.stream().anyMatch(CommonComponent.IndexType::isExcluded);
+      if(!containExcludedType) break;
     }
   }
 
