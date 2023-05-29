@@ -86,114 +86,11 @@ public class Utils {
   public static Map<CommonComponent.IndexType, String> generateIndexSeqMap(String rule, String F, String R) {
     Map<CommonComponent.IndexType, String> map = new HashMap<>();
     CommonComponent.IndexType.stream().forEach(type -> {
-      CommonComponent.FRPair frPair = decorateFR(type, F, R);
+      CommonComponent.FRPair frPair = CommonComponent.IndexType.decorateFR(type, F, R);
       map.put(type, generateSeq(rule, frPair.getF(), frPair.getR()));
     });
     return map;
   }
-  public static CommonComponent.FRPair decorateFR(CommonComponent.IndexType type, String F, String R) {
-    if(type.equals(CommonComponent.IndexType.S6)) {
-      // 处理S6的情况
-      switch (F.length()) {
-        case 6 -> {
-          F = F;
-        }
-        case 8 -> {
-          F = F.substring(2);
-        }
-        case 10 -> {
-          F = F.substring(4);
-        }
-        default -> System.out.println("*************************************Oops! error*************************************");
-      }
-      R = "";
-    } else if(type.equals(CommonComponent.IndexType.S8)) {
-      // 处理S8的情况
-      switch (F.length()) {
-        case 6 -> {
-          F = "AC" + F;
-        }
-        case 8 -> {
-          F = F;
-        }
-        case 10 -> {
-          F = F.substring(2);
-        }
-        default -> System.out.println("*************************************Oops! error*************************************");
-      }
-      R = "";
-    } else if (type.equals(CommonComponent.IndexType.S10)) {
-      // 处理S10的情况
-      switch (F.length()) {
-        case 6 -> {
-          F = "TCAC" + F;
-        }
-        case 8 -> {
-          F = "AC" + F;
-        }
-        case 10 -> {
-          F = F;
-        }
-        default -> System.out.println("*************************************Oops! error*************************************");
-      }
-      R = "";
-    }else if(type.equals(CommonComponent.IndexType.P6)) {
-      // 处理6+6的情况
-      switch (F.length()) {
-        case 6 -> {
-          F = F;
-          R = R.length() > 0 ? R : "NNNNNN";
-        }
-        case 8 -> {
-          F = F.substring(2);
-          R = R.length() > 0 ? R.substring(2) : "NNNNNN";
-          ;
-        }
-        case 10 -> {
-          F = F.substring(4);
-          R = R.length() > 0 ? R.substring(4) : "NNNNNN";
-        }
-        default -> System.out.println("*************************************Oops! error*************************************");
-      }
-    } else if(type.equals(CommonComponent.IndexType.P8)) {
-      // 处理8+8的情况
-      switch (F.length()) {
-        case 6 -> {
-          F = "AC" + F;
-          R = R.length() > 0 ? "AC" + R : "NNNNNNNN";
-        }
-        case 8 -> {
-          F = F;
-          R = R.length() > 0 ? R : "NNNNNNNN";
-          ;
-        }
-        case 10 -> {
-          F = F.substring(2);
-          R = R.length() > 0 ? R.substring(2) : "NNNNNNNN";
-        }
-        default -> System.out.println("*************************************Oops! error*************************************");
-      }
-    } else if (type.equals(CommonComponent.IndexType.P10)) {
-      // 处理10+10的情况
-      switch (F.length()) {
-        case 6 -> {
-          F = "TCAC" + F;
-          R = R.length() > 0 ? "TCAC" + R : "NNNNNNNNNN";
-        }
-        case 8 -> {
-          F = "AC" + F;
-          R = R.length() > 0 ? "AC" + R : "NNNNNNNNNN";
-          ;
-        }
-        case 10 -> {
-          F = F;
-          R = R.length() > 0 ? R : "NNNNNNNNNN";
-        }
-        default -> System.out.println("*************************************Oops! error*************************************");
-      }
-    }
-    return new CommonComponent.FRPair(F, R);
-  };
   /**
    * 根据提供的F/R及规则，生成用于计算的index序列
    * @param rule 拆分规则
@@ -274,10 +171,8 @@ public class Utils {
     list.add(head0);
     int columnSize = 0;
     switch (indexType) {
-      case P6 -> columnSize = 12;
       case P8 -> columnSize = 16;
       case P10 -> columnSize = 20;
-      case S6 -> columnSize = 6;
       case S8 -> columnSize = 8;
       case S10 -> columnSize = 10;
     }
@@ -958,27 +853,6 @@ public class Utils {
         indexTypeList.set(i, indexType);
         break;
       }
-    }
-  }
-  /**
-   * 从旧的indexTypeList获取新的indexTypeList
-   * @param indexTypeList 旧的indexTypeList
-   */
-  public static void indexTypeListPlusOne(List<CommonComponent.IndexType> indexTypeList) {
-    while (true) {
-      if (indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast)) break;
-      for (int i = indexTypeList.size() - 1; i >= 0; i--) {
-        CommonComponent.IndexType type = indexTypeList.get(i);
-        if (CommonComponent.IndexType.isLast(type)) {
-          indexTypeList.set(i, CommonComponent.IndexType.getFirst());
-          continue;
-        }
-        CommonComponent.IndexType indexType = type.plus(1);
-        indexTypeList.set(i, indexType);
-        break;
-      }
-      boolean containExcludedType = indexTypeList.stream().anyMatch(CommonComponent.IndexType::isExcluded);
-      if(!containExcludedType) break;
     }
   }
 

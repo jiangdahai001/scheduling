@@ -17,12 +17,10 @@ public class Test {
     System.out.println(Utils.getTimeString(end - start));
   }
   public static void test () {
-    int solutionCount = 0;
-    while (true) {
-      if(solutionCount % 7 != 0) continue;
-      solutionCount++;
-      if (solutionCount >= 100) break;
-      System.out.println("solution count: " + solutionCount);
+    int ceiling = 1450;
+    int floor = 1350;
+    for(int i=1;i<15;i++) {
+      System.out.println(i + "个lane：" + i*floor +"---"+i*ceiling);
     }
   }
 }

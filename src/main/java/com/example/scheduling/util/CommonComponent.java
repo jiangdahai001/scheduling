@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 public class CommonComponent {
   // index类型
   public enum IndexType {
-    S6(6),S8(3),S10(4),P6(5),P8(1),P10(2);
+    S8(3),S10(4),P8(1),P10(2);
     public static Stream<IndexType> stream() {
       return Stream.of(IndexType.values());
     }
@@ -30,19 +30,86 @@ public class CommonComponent {
       return null;
     }
     public static Boolean isLast(IndexType indexType) {
-      return indexType.equals(S6);
+      return indexType.equals(S10);
     }
     public static IndexType getFirst() {
       return P8;
     }
     public static Boolean isPairEnd(IndexType indexType) {
-      return indexType.equals(P6)|| indexType.equals(P8) ||indexType.equals(P10);
+      return indexType.equals(P8) ||indexType.equals(P10);
     }
     public static Boolean isSingleEnd(IndexType indexType) {
-      return indexType.equals(S6)|| indexType.equals(S8) ||indexType.equals(S10);
+      return indexType.equals(S8) ||indexType.equals(S10);
     }
-    public static Boolean isExcluded(IndexType indexType) {
-      return indexType.equals(S6)|| indexType.equals(P6) ||indexType.equals(S10) ||indexType.equals(P10);
+    public static FRPair decorateFR(IndexType indexType, String F, String R) {
+      if(indexType.equals(CommonComponent.IndexType.S8)) {
+        // 处理S8的情况
+        switch (F.length()) {
+          case 6 -> {
+            F = "AC" + F;
+          }
+          case 8 -> {
+            F = F;
+          }
+          case 10 -> {
+            F = F.substring(2);
+          }
+          default -> System.out.println("*************************************Oops! error*************************************");
+        }
+        R = "";
+      } else if (indexType.equals(CommonComponent.IndexType.S10)) {
+        // 处理S10的情况
+        switch (F.length()) {
+          case 6 -> {
+            F = "TCAC" + F;
+          }
+          case 8 -> {
+            F = "AC" + F;
+          }
+          case 10 -> {
+            F = F;
+          }
+          default -> System.out.println("*************************************Oops! error*************************************");
+        }
+        R = "";
+      }else if(indexType.equals(CommonComponent.IndexType.P8)) {
+        // 处理8+8的情况
+        switch (F.length()) {
+          case 6 -> {
+            F = "AC" + F;
+            R = R.length() > 0 ? "AC" + R : "NNNNNNNN";
+          }
+          case 8 -> {
+            F = F;
+            R = R.length() > 0 ? R : "NNNNNNNN";
+            ;
+          }
+          case 10 -> {
+            F = F.substring(2);
+            R = R.length() > 0 ? R.substring(2) : "NNNNNNNN";
+          }
+          default -> System.out.println("*************************************Oops! error*************************************");
+        }
+      } else if (indexType.equals(CommonComponent.IndexType.P10)) {
+        // 处理10+10的情况
+        switch (F.length()) {
+          case 6 -> {
+            F = "TCAC" + F;
+            R = R.length() > 0 ? "TCAC" + R : "NNNNNNNNNN";
+          }
+          case 8 -> {
+            F = "AC" + F;
+            R = R.length() > 0 ? "AC" + R : "NNNNNNNNNN";
+            ;
+          }
+          case 10 -> {
+            F = F;
+            R = R.length() > 0 ? R : "NNNNNNNNNN";
+          }
+          default -> System.out.println("*************************************Oops! error*************************************");
+        }
+      }
+      return new FRPair(F, R);
     }
   }
   // index的序列对

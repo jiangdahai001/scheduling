@@ -16,11 +16,11 @@ public class Main {
    * @param args 命令行参数
    */
   public static void main(String[] args) throws IOException {
+    loop();
 //    backtraceOnce();
-//    backtraceWhile();
-    greedySolution();
+//    greedySolution();
   }
-  public static void backtraceWhile() throws IOException{
+  public static void loop() throws IOException{
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     String in;
     while(true){
@@ -29,15 +29,26 @@ public class Main {
       in = br.readLine();
       switch (in) {
         case "1", "" -> {
-          System.out.println("请输入Lane的理想数据量(默认1400): ");
+//          System.out.println("请输入Lane的理想数据量(默认1400): ");
+//          in = br.readLine();
+//          if(!in.equals("")) {
+//            float idealLaneDataSize = Float.parseFloat(in);
+//            CommonComponent.SchedulingInfo.getInstance().setIdealLaneDataSize(idealLaneDataSize);
+//            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeCeiling(idealLaneDataSize + 50);
+//            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeFloor(idealLaneDataSize - 50);
+//          }
+          System.out.println("请输入Lane的最大数据量默认1450: ");
           in = br.readLine();
           if(!in.equals("")) {
-            float idealLaneDataSize = Float.parseFloat(in);
-            CommonComponent.SchedulingInfo.getInstance().setIdealLaneDataSize(idealLaneDataSize);
-            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeCeiling(idealLaneDataSize + 50);
-            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeFloor(idealLaneDataSize - 50);
+            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeCeiling(Float.parseFloat(in));
           }
-          backtraceOnce();
+          System.out.println("请输入Lane的最小数据量默认1350: ");
+          in = br.readLine();
+          if(!in.equals("")) {
+            CommonComponent.SchedulingInfo.getInstance().setLaneDataSizeFloor(Float.parseFloat(in));
+          }
+          greedySolution();
+//          backtraceOnce();
         }
         case("2") -> {
           System.exit(1);
@@ -92,22 +103,23 @@ public class Main {
       sr.setLaneList(laneList);
       sr.setUnscheduledLibraryGroupMap(unscheduledMap);
       Utils.setScheduledResultInfo(sr);
-      resultList.add(sr);
-      if(sr.getSuccess()) {
-        System.out.println("scheduling success break");
-        break;
+      if(sr.getSuccess() || sr.getNotes().equals("数据量不符合;")) {
+        resultList.add(sr);
+        if(resultList.size()>=3) {
+          System.out.println("scheduling success break");
+          break;
+        }
       }
       // 判断是否遍历完了所有可能的indextype组合，如果遍历完了，就跳出循环
       boolean finished = indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast);
       if(finished) break;
       // 如果没有遍历完所有indextype组合，就初始化lane列表和未排单列表，继续下一次排单
-//      Utils.indexTypeListPlus(indexTypeList, 1);
-      Utils.indexTypeListPlusOne(indexTypeList);
+      Utils.indexTypeListPlus(indexTypeList, 1);
       laneList = Utils.initLaneList(laneListSize, indexTypeList);
       unscheduledMap = new HashMap<>();
     }
     // 将排单结果打印出来
-    Utils.printResult(resultList, true);
+    Utils.printResult(resultList, false);
     // 将排单结果输出到excel
 //    resultList.forEach(result -> {
 //      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";

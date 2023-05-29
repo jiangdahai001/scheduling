@@ -44,8 +44,7 @@ public class TaskRunner {
       indexTypeList = laneList.stream().map(Lane::getIndexType).collect(Collectors.toList());
       boolean finished = indexTypeList.stream().allMatch(CommonComponent.IndexType::isLast);
       if(finished) break;
-//      Utils.indexTypeListPlus(indexTypeList, 1);
-      Utils.indexTypeListPlusOne(indexTypeList);
+      Utils.indexTypeListPlus(indexTypeList, 1);
       laneList = Utils.initLaneList(laneList.size(), indexTypeList);
       tasks.add(new Task(libraryGroupMap, laneList, countDownLatch));
     }
