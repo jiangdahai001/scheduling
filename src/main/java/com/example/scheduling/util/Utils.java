@@ -211,7 +211,7 @@ public class Utils {
       }
     }
     switch (rule) {
-      case "I5正+I7正", "R正+F正", "R+F", "I7正", "F正" -> {
+      case "I5正+I7正", "R正+F正", "R+F", "I7正", "F正", "F" -> {
         sb.append(R).append(F);
       }
       case "I5正+I7反", "R正+F反", "R+F反", "I7反", "F反" -> {
@@ -1233,6 +1233,7 @@ public class Utils {
         break;
       }
     }
+    System.out.println("calculate lane size: " + count);
     return count;
   }
 
