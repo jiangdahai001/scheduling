@@ -23,6 +23,10 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
   private Boolean isUnbalanceMozhuo;
   // pooling编号
   private String poolingCode;
+  // 上机lane序号
+  private Integer laneNumber;
+  // 上机策略
+  private String laneIndexType;
 
   // 总数据量
   private Float dataSize;
@@ -153,6 +157,22 @@ public class LibraryGroup implements Comparable<LibraryGroup> {
 
   public void setLibraryList(List<Library> libraryList) {
     this.libraryList = libraryList;
+  }
+
+  public Integer getLaneNumber() {
+    return laneNumber;
+  }
+
+  public void setLaneNumber(Integer laneNumber) {
+    this.laneNumber = laneNumber;
+  }
+
+  public String getLaneIndexType() {
+    return laneIndexType;
+  }
+
+  public void setLaneIndexType(String laneIndexType) {
+    this.laneIndexType = laneIndexType;
   }
 
   /**

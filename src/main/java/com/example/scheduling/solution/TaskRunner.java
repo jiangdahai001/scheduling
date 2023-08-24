@@ -14,7 +14,7 @@ public class TaskRunner {
   // 线程池最大线程数
   private static final int MAX_THREADS = 10;
   // 线程超时时间值
-  private static final int TIMEOUT = 6;
+  private static final int TIMEOUT = 60;
   // 线程超时单位
   private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 

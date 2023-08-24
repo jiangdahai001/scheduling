@@ -1,26 +1,31 @@
 package com.example.scheduling;
 
-import com.example.scheduling.util.Utils;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
 
 public class Test {
-  public static void main(String[] args) throws Exception{
-    long start = System.currentTimeMillis();
-    test();
-    long end = System.currentTimeMillis();
-    System.out.println("*****************************************************************************");
-    System.out.println((end - start) + "ms");
-    System.out.println(Utils.getTimeString(end - start));
-  }
-  public static void test () {
-    int ceiling = 1450;
-    int floor = 1350;
-    for(int i=1;i<15;i++) {
-      System.out.println(i + "个lane：" + i*floor +"---"+i*ceiling);
-    }
+  private static final Exchanger<String> exchanger = new Exchanger<>();
+  private static final ExecutorService threadPool =  Executors.newFixedThreadPool(2);
+  public static void main(String[] args) {
+    threadPool.execute(() -> {
+      String A = "银行流水";
+      try {
+        Thread.sleep(1000);
+        System.out.println("A 完成录入");
+        exchanger.exchange(A);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    });
+    threadPool.execute(() -> {
+      String B = "银行流水";
+      try {
+        System.out.println("B 完成录入");
+        String A = exchanger.exchange(B);
+        System.out.println("A和B的数据是否一致: " + A.equals(B) + ",A录入的是: "+A + ",B录入的是: " +B);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    });
+    threadPool.shutdown();
   }
 }

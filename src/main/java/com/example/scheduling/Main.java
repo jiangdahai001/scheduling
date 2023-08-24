@@ -16,9 +16,34 @@ public class Main {
    * @param args 命令行参数
    */
   public static void main(String[] args) throws IOException {
-    loop();
+//    loop();
 //    backtraceOnce();
 //    greedySolution();
+    checkScheduledResult();
+  }
+
+  /**
+   * 校验排单是否符合要求
+   */
+  public static void checkScheduledResult() {
+    String fileName = "C:\\Users\\admin\\Desktop\\scheduling\\beina-20230816.xlsx";
+    Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
+    Utils.readExcel(fileName, libraryGroupMap);
+    Utils.preprocess(libraryGroupMap);
+    List<Lane> laneList = Utils.putLibraryGroupInLane(libraryGroupMap);
+    CommonComponent.ScheduledResult sr = new CommonComponent.ScheduledResult();
+    sr.setLaneList(laneList);
+    Map<String, LibraryGroup> unscheduledMap = new HashMap<>();
+    sr.setUnscheduledLibraryGroupMap(unscheduledMap);
+    Utils.setScheduledResultInfo(sr);
+    if(sr.getSuccess()) {
+      System.out.println("scheduling success");
+    } else {
+      System.out.println("scheduling fail" + sr.getNotes());
+    }
+    String outFileName = fileName.substring(0, fileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-check.xlsx";
+    Utils.writeExcel(outFileName, sr, false);
+    System.out.println(outFileName + "====" + sr.getSuccess() + "====" + sr.getNotes());
   }
   public static void loop() throws IOException{
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -61,7 +86,8 @@ public class Main {
     List<CommonComponent.ScheduledResult> resultList = new ArrayList<>();
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230525.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230525.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230816.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     // 新建文库组map，用于存放本次排单的数据，key为吉因加code，value为文库组对象
@@ -103,6 +129,7 @@ public class Main {
       sr.setLaneList(laneList);
       sr.setUnscheduledLibraryGroupMap(unscheduledMap);
       Utils.setScheduledResultInfo(sr);
+      System.out.println("solution count: " + solutionCount + "--" + indexTypeList + "--" + sr.getNotes());
       if(sr.getSuccess() || sr.getNotes().equals("数据量不符合;")) {
         resultList.add(sr);
         if(resultList.size()>=3) {
@@ -121,23 +148,24 @@ public class Main {
     // 将排单结果打印出来
     Utils.printResult(resultList, false);
     // 将排单结果输出到excel
-//    resultList.forEach(result -> {
-//      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
-//      Utils.writeExcel(fileName, result, true);
-//      System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
-//      try {
-//        Thread.sleep(1000);
-//      } catch (InterruptedException e) {
-//        e.printStackTrace();
-//      }
-//    });
+    resultList.forEach(result -> {
+      String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-greedy.xlsx";
+      Utils.writeExcel(fileName, result, true);
+      System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    });
   }
   public static void backtraceOnce() {
     System.out.println("hello backtrace");
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\216.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州2.16.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州1.11.xlsx";
-    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230525.xlsx";
+//    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230525.xlsx";
+    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\20230816.xlsx";
 //    String inFileName = "C:\\Users\\admin\\Desktop\\scheduling\\input表苏州3.22.xlsx";
     Map<String, LibraryGroup> libraryGroupMap = new HashMap<>();
     Utils.readExcel(inFileName, libraryGroupMap);
@@ -146,17 +174,17 @@ public class Main {
     List<Lane> laneList = Utils.initLaneList(laneListSize, null);
     List<CommonComponent.ScheduledResult> resultList = TaskRunner.backtrace(libraryGroupMap, laneList, 1);
     Utils.printResult(resultList, true);
-//    resultList.forEach(result -> {
-//      if(result.getSuccess()) {
-//        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-backtrace.xlsx";
-//        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
-//        Utils.writeExcel(fileName, result, true);
-//        try {
-//          Thread.sleep(1000);
-//        } catch (InterruptedException e) {
-//          e.printStackTrace();
-//        }
-//      }
-//    });
+    resultList.forEach(result -> {
+      if(result.getSuccess()) {
+        String fileName = inFileName.substring(0, inFileName.lastIndexOf(".")) + "-" +Utils.getCurrentTime() + "-backtrace.xlsx";
+        System.out.println(fileName + "====" + result.getSuccess() + "====" + result.getNotes());
+        Utils.writeExcel(fileName, result, true);
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
 }

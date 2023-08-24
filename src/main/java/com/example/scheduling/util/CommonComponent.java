@@ -245,9 +245,9 @@ public class CommonComponent {
       this.urgentDataSize = 0f;
       this.libraryGroupSize = 0;
       this.urgentLibraryGroupSize = 0;
-      this.idealLaneDataSize = 1400f;
-      this.laneDataSizeCeiling = 1450f;
-      this.laneDataSizeFloor = 1350f;
+      this.idealLaneDataSize = 1600f;
+      this.laneDataSizeCeiling = 1850f;
+      this.laneDataSizeFloor = 1550f;
       this.resultList = Collections.synchronizedList(new ArrayList<>());
     }
     public static SchedulingInfo getInstance() {

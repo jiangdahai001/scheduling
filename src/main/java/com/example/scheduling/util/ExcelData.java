@@ -25,6 +25,10 @@ public class ExcelData {
   private String splitRule;
   @ExcelProperty("备注")
   private String notes;
+  @ExcelProperty("上机lane标识")
+  private Integer laneNumber;
+  @ExcelProperty("上机策略")
+  private String laneIndexType;
 
   @Override
   public String toString() {
@@ -127,5 +131,21 @@ public class ExcelData {
 
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  public Integer getLaneNumber() {
+    return laneNumber;
+  }
+
+  public void setLaneNumber(Integer laneNumber) {
+    this.laneNumber = laneNumber;
+  }
+
+  public String getLaneIndexType() {
+    return laneIndexType;
+  }
+
+  public void setLaneIndexType(String laneIndexType) {
+    this.laneIndexType = laneIndexType;
   }
 }

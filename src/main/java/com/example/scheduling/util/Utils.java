@@ -2,7 +2,9 @@ package com.example.scheduling.util;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.read.listener.PageReadListener;
+import com.alibaba.excel.read.listener.ReadListener;
 import com.alibaba.excel.util.ListUtils;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.fastjson.JSONArray;
@@ -747,7 +749,35 @@ public class Utils {
     }
     return null;
   }
-
+  /**
+   * 将文库组加入到laneList中
+   * @param libraryGroupMap 文库组map
+   */
+  public static List<Lane> putLibraryGroupInLane(Map<String, LibraryGroup> libraryGroupMap) {
+    List<Lane> laneList = new ArrayList<>();
+    // 将map转换为list，按加急/不平衡/数据量排序
+    List<LibraryGroup> lgList = libraryGroupMap.values().stream().collect(Collectors.toList());
+    for(LibraryGroup lg:lgList) {
+      Integer laneNumber = lg.getLaneNumber();
+      List<Lane> ll = laneList.stream().filter(lane -> {
+        return lane.getNumber().equals(laneNumber);
+      }).collect(Collectors.toList());
+      Lane lane = new Lane();
+      if(ll.size()>0) {
+        lane = ll.get(0);
+      } else {
+        lane.setNumber(laneNumber);
+        lane.setIndexType(CommonComponent.IndexType.valueOf(lg.getLaneIndexType()));
+        laneList.add(lane);
+      }
+      if(canAddLibraryGroupToLane(lane, lg)) {
+        addLibraryGroupToLane(lane, lg);
+      } else {
+        System.out.println("无法将文库组放到lane中，排单同规则不一致");
+      }
+    };
+    return laneList;
+  }
   /**
    * 将文库组加入到laneList中
    * @param libraryGroupMap 文库组map
@@ -931,7 +961,6 @@ public class Utils {
     }
     return true;
   }
-
   /**
    * 读取excel，获取基础数据
    * @param fileName 文件名
@@ -951,6 +980,8 @@ public class Utils {
         String productName = excelData.getProductName();
         String geneplusCode = excelData.getGeneplusCode();
         String notes = excelData.getNotes()==null ? "" : excelData.getNotes();
+        Integer laneNumber = excelData.getLaneNumber()==null ? 0 : excelData.getLaneNumber();
+        String laneIndexType = excelData.getLaneIndexType()==null ? "" : excelData.getLaneIndexType();
         // 判断是否在待排单的文库组中，不存在，新增；存在，加入新文库
         if(libraryGroupMap.containsKey(excelData.getGeneplusCode())) {
           lg = libraryGroupMap.get(excelData.getGeneplusCode());
@@ -1016,6 +1047,10 @@ public class Utils {
             lg.setSingleEnd(excelData.getR()==null || excelData.getR().equals(""));
             lg.setDataSize(0f);
             lg.setLibraryList(new ArrayList<>());
+            // 为文库组设置lane编号，用于检查排单结果是否正确
+            lg.setLaneNumber(laneNumber);
+            // 为文库组设置上机策略，用于检查排单结果是否正确
+            lg.setLaneIndexType(laneIndexType);
             libraryGroupMap.put(excelData.getGeneplusCode(), lg);
           }
         }
@@ -1059,7 +1094,9 @@ public class Utils {
     List<ExcelDataOutput> dataList = new ArrayList<>();
     for(int i=0;i<laneList.size();i++) {
       Lane lane = laneList.get(i);
-      int laneNumber = i + 1;
+      // 如果时校验排单结果，那么这里就已经有序号了，可以直接使用
+      Integer laneNumber = lane.getNumber();
+      if(laneNumber == null) laneNumber = i + 1;
       dataList.addAll(getScheduledExcelDataList(lane, laneNumber));
     }
     WriteSheet sheet1 = EasyExcel.writerSheet("排单结果").build();
@@ -1151,8 +1188,8 @@ public class Utils {
     List<Lane> laneList = new ArrayList<>();
     for(int i=0;i<size;i++) {
       Lane lane = new Lane();
-//      lane.setDataSizeCeiling(1400f);
-//      lane.setDataSizeFloor(1300f);
+      lane.setDataSizeCeiling(1650f);
+      lane.setDataSizeFloor(1550f);
       if(indexTypeList != null) {
         lane.setIndexType(indexTypeList.get(i));
       }

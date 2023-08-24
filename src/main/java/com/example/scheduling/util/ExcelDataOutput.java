@@ -11,6 +11,8 @@ public class ExcelDataOutput {
   private String geneplusCode;
   @ExcelProperty("子文库名称")
   private String subLibraryName;
+  @ExcelProperty("index号")
+  private String indexNum;
   @ExcelProperty("F")
   private String f;
   @ExcelProperty("R")
@@ -122,5 +124,13 @@ public class ExcelDataOutput {
 
   public void setIndexType(String indexType) {
     this.indexType = indexType;
+  }
+
+  public String getIndexNum() {
+    return indexNum;
+  }
+
+  public void setIndexNum(String indexNum) {
+    this.indexNum = indexNum;
   }
 }

@@ -8,6 +8,8 @@ import java.util.List;
 public class Lane {
   // index 类型
   private CommonComponent.IndexType indexType;
+  // lane的序号
+  private Integer number;
   // lane的数据量
   private Float dataSize;
   // lane的数据量上限
@@ -133,5 +135,13 @@ public class Lane {
 
   public void setLibraryGroupList(List<LibraryGroup> libraryGroupList) {
     this.libraryGroupList = libraryGroupList;
+  }
+
+  public Integer getNumber() {
+    return number;
+  }
+
+  public void setNumber(Integer number) {
+    this.number = number;
   }
 }
